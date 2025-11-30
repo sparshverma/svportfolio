@@ -35,8 +35,10 @@ export const Hero = () => {
             <Button variant="hero" size="lg">
               View Projects
             </Button>
-            <Button variant="glass" size="lg">
-              Download CV
+            <Button variant="glass" size="lg" asChild>
+              <a href="/Sparsh_Verma_CV.pdf" download>
+                Download CV
+              </a>
             </Button>
           </div>
           
