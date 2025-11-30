@@ -46,9 +46,16 @@ export const Research = () => {
               </div>
               
               <div className="flex gap-3 pt-4">
-                <Button variant="hero" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Download Paper
+                <Button variant="hero" className="gap-2" asChild>
+                  <a 
+                    href="/Cyber_AI_Research_Paper.pdf" 
+                    download="Cyber_AI_Research_Paper.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Paper
+                  </a>
                 </Button>
                 <Button variant="glass" className="gap-2">
                   Read Abstract
