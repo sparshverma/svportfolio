@@ -63,12 +63,12 @@ const MobiusStripGeometry = () => {
       <meshStandardMaterial
         color="#10b981"
         emissive="#34d399"
-        emissiveIntensity={0.4}
+        emissiveIntensity={0.6}
         metalness={0.7}
         roughness={0.3}
         side={THREE.DoubleSide}
         transparent
-        opacity={0.8}
+        opacity={0.9}
       />
     </mesh>
   );
@@ -76,7 +76,7 @@ const MobiusStripGeometry = () => {
 
 export const MobiusStrip = () => {
   return (
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] opacity-30 pointer-events-none z-0">
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0">
       <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} color="#4ade80" />
