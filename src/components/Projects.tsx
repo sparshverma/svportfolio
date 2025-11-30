@@ -12,7 +12,7 @@ const projects = [
     image: cyberAi,
     tags: ["Python", "Machine Learning", "Cybersecurity", "Research"],
     links: {
-      github: "#",
+      github: "https://github.com/sparshverma/Cyber.AI",
       live: "#",
     },
   },
@@ -32,7 +32,7 @@ const projects = [
     image: projectMax,
     tags: ["Python", "OpenAI", "Android", "Voice AI"],
     links: {
-      github: "#",
+      github: "https://github.com/sparshverma/Max",
       live: "#",
     },
   },
@@ -90,13 +90,35 @@ export const Projects = () => {
                 </div>
                 
                 <div className="flex gap-3 pt-2">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Github className="w-4 h-4" />
-                    Code
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-2"
+                    asChild
+                  >
+                    <a 
+                      href={project.links.github} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <Github className="w-4 h-4" />
+                      Code
+                    </a>
                   </Button>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <ExternalLink className="w-4 h-4" />
-                    Live
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-2"
+                    asChild
+                  >
+                    <a 
+                      href={project.links.live} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Live
+                    </a>
                   </Button>
                 </div>
               </div>
