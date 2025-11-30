@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import { MobiusStrip } from "./MobiusStrip";
 
 export const Hero = () => {
   return (
@@ -10,6 +11,9 @@ export const Hero = () => {
       {/* Minimal geometric accent */}
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-glow-pulse" />
       <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '1s' }} />
+      
+      {/* 3D Möbius Strip */}
+      <MobiusStrip />
       
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
