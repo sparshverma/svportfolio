@@ -1,65 +1,80 @@
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
-import heroOrb from "@/assets/hero-orb.jpg";
+import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
 
 export const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated background orb */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-40">
-        <img 
-          src={heroOrb} 
-          alt="" 
-          className="w-full max-w-3xl animate-float"
-        />
-      </div>
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/20" />
       
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-background/50 to-background" />
+      {/* Minimal geometric accent */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-glow-pulse" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '1s' }} />
       
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center">
-        <div className="space-y-8 animate-fade-in">
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tight">
-              Sparsh Verma
-            </h1>
-            <div className="flex flex-wrap justify-center gap-3 text-lg md:text-xl text-muted-foreground">
-              <span className="gradient-text font-semibold">AI Engineer</span>
-              <span>•</span>
-              <span className="gradient-text font-semibold">Full-Stack Developer</span>
-              <span>•</span>
-              <span className="gradient-text font-semibold">Mobile Developer</span>
+      <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
+        <div className="space-y-12 animate-fade-in">
+          {/* Main content */}
+          <div className="space-y-6 text-center">
+            <div className="space-y-3">
+              <p className="text-sm uppercase tracking-wider text-muted-foreground font-medium">
+                AI Engineer • Full-Stack Developer • Mobile Developer
+              </p>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+                Sparsh Verma
+              </h1>
             </div>
+            
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Building intelligent systems that merge AI, security, and real-world impact
+            </p>
           </div>
           
-          <p className="text-xl md:text-2xl text-foreground/90 max-w-3xl mx-auto leading-relaxed">
-            Building intelligent systems that merge AI, security, and real-world impact
-          </p>
-          
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            B.Tech in Computer Science (VIT, India) • MSc in Artificial Intelligence (Queen Mary University of London)
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <Button variant="hero" size="lg" className="gap-2">
-              <Download className="w-5 h-5" />
-              Download CV
-            </Button>
-            <Button variant="glass" size="lg" className="gap-2">
-              <ExternalLink className="w-5 h-5" />
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button variant="hero" size="lg">
               View Projects
             </Button>
+            <Button variant="glass" size="lg">
+              Download CV
+            </Button>
+          </div>
+          
+          {/* Social Links */}
+          <div className="flex justify-center gap-4 pt-4">
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+            >
+              <Linkedin className="w-5 h-5" />
+            </a>
+            <a
+              href="mailto:sparsh@example.com"
+              className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110"
+            >
+              <Mail className="w-5 h-5" />
+            </a>
           </div>
         </div>
       </div>
       
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-primary/50 rounded-full flex items-start justify-center p-2">
-          <div className="w-1 h-2 bg-primary rounded-full animate-glow-pulse" />
-        </div>
-      </div>
+      {/* Minimal scroll indicator */}
+      <a
+        href="#about"
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-primary transition-colors animate-bounce"
+      >
+        <ArrowDown className="w-5 h-5" />
+      </a>
     </section>
   );
 };
