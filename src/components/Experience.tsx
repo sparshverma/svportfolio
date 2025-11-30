@@ -9,25 +9,25 @@ const experiences = [
     type: "Academic",
   },
   {
-    title: "Full-Stack Development",
-    organization: "Personal Projects",
-    period: "2022 - Present",
-    description: "Developed multiple full-stack applications using Python, TypeScript, and Node.js. Implemented modern architectures and deployed to cloud platforms.",
+    title: "Data Administrator",
+    organization: "Fullers Smith and Turner",
+    period: "03/2024 - 11/2025",
+    description: "Maintained 99.5% data integrity across multiple databases serving critical business operations. Troubleshoot database issues and resolve problems promptly. Created interactive Power BI dashboards serving 200+ stakeholders, improving decision-making efficiency by 25%. Implemented ETL pipelines using Hadoop, Spark, and Kafka, reducing data processing time by 35%. Ensuring all employment regulations are followed, including working hours, payroll, health and safety.",
+    type: "Data",
+  },
+  {
+    title: "Brand Ambassador",
+    organization: "Meraki (London)",
+    period: "01/2024 - 02/2024",
+    description: "Served as the charismatic front-line brand ambassador (Sales) of HelloFresh-branded food items. Achieved targeted sales campaign for Hello Fresh at Meraki, resulting in a remarkable 25% increase in sales revenue within the first month. Achieved personal best (PB) sales record with 18 sales in a day and 41 sales in a week. Elevated customer satisfaction through personalised product recommendations, contributing to a 25% increase in repeat purchases and a substantial 30% surge in overall revenue.",
+    type: "Sales",
+  },
+  {
+    title: "Android App Developer",
+    organization: "DeepStory (India)",
+    period: "06/2022 - 09/2022",
+    description: "Developed cutting-edge social media applications at DeepStory, a startup focusing on REST API development and AWS database management. Played a pivotal role as a front-end developer and MLOps specialist, utilising Android Studio for front-end development and PyCharm for MLOps. Optimised reinforcement learning algorithms, achieving 20% accuracy improvement on recommendation systems.",
     type: "Development",
-  },
-  {
-    title: "Mobile Development",
-    organization: "Freelance",
-    period: "2021 - Present",
-    description: "Created cross-platform mobile applications using Flutter, with native implementations in Kotlin and Swift for optimal performance.",
-    type: "Mobile",
-  },
-  {
-    title: "Project Management Training",
-    organization: "Udemy - PMP & PRINCE2",
-    period: "2024",
-    description: "Actively developing project management skills through comprehensive courses led by certified instructors. Focus on Agile, Scrum, and enterprise project delivery.",
-    type: "Learning",
   },
 ];
 
