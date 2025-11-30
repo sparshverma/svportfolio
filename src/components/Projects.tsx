@@ -1,8 +1,9 @@
 import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import cyberAi from "@/assets/cyber-ai.jpg";
-import projectAi from "@/assets/project-ai.jpg";
-import projectMobile from "@/assets/project-mobile.jpg";
+import projectHyVuln from "@/assets/project-hyvuln.jpg";
+import projectMax from "@/assets/project-max.jpg";
+import projectRagChat from "@/assets/project-ragchat.jpg";
 
 const projects = [
   {
@@ -16,20 +17,30 @@ const projects = [
     },
   },
   {
-    title: "AI + IoT System",
-    description: "Intelligent IoT system for the poultry industry, leveraging machine learning for efficiency optimization and real-time monitoring.",
-    image: projectAi,
-    tags: ["IoT", "ML", "Python", "Data Engineering"],
+    title: "HyVuln",
+    description: "A Hybrid vulnerability scanner, a comprehensive security tool for real-time cybersecurity assessment. Processed 10,000+ vulnerability patterns with 92% detection accuracy.",
+    image: projectHyVuln,
+    tags: ["Python", "Security", "Vulnerability Scanner", "Cybersecurity"],
     links: {
       github: "#",
       live: "#",
     },
   },
   {
-    title: "Flutter Mobile Suite",
-    description: "Collection of cross-platform mobile applications built with Flutter, featuring modern UI/UX and seamless performance.",
-    image: projectMobile,
-    tags: ["Flutter", "Kotlin", "Swift", "Mobile"],
+    title: "Max",
+    description: "First AI GPT voice assistant, developed in Python using OpenAI and pyttsx3 libraries, implemented in an Android application using Android Studio.",
+    image: projectMax,
+    tags: ["Python", "OpenAI", "Android", "Voice AI"],
+    links: {
+      github: "#",
+      live: "#",
+    },
+  },
+  {
+    title: "RagChat",
+    description: "Advanced RAG-based chatbot leveraging retrieval-augmented generation for intelligent document-based conversations and knowledge retrieval.",
+    image: projectRagChat,
+    tags: ["Python", "RAG", "LangChain", "AI Chatbot"],
     links: {
       github: "#",
       live: "#",
@@ -45,7 +56,7 @@ export const Projects = () => {
           Featured <span className="gradient-text">Projects</span>
         </h2>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {projects.map((project, index) => (
             <div
               key={project.title}
