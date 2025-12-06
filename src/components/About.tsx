@@ -1,17 +1,12 @@
 export const About = () => {
-  return (
-    <section id="about" className="py-20 px-6">
+  return <section id="about" className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
           About <span className="gradient-text">Me</span>
         </h2>
         
         <div className="glass-card glow-hover rounded-2xl p-8 md:p-12 space-y-6">
-          <p className="text-lg text-foreground/90 leading-relaxed">
-            I'm a self-driven AI Engineer with a passion for building intelligent systems that create real-world impact. 
-            Currently based in the UK on a Graduate Visa, I bring a collaborative approach to every project and a 
-            commitment to continuous learning.
-          </p>
+          <p className="text-lg text-foreground/90 leading-relaxed">I'm a self-driven AI Engineer with a passion for building intelligent systems that create real-world impact. Currently based in Mumbai, India, I bring a collaborative approach to every project and a commitment to continuous learning.</p>
           
           <p className="text-lg text-foreground/90 leading-relaxed">
             My expertise spans across Python, TypeScript, Java, Kotlin, and Swift, with a particular focus on the 
@@ -40,6 +35,5 @@ export const About = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
