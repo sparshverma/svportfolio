@@ -6,7 +6,7 @@ export const About = () => {
         </h2>
         
         <div className="glass-card glow-hover rounded-2xl p-8 md:p-12 space-y-6">
-          <p className="text-lg text-foreground/90 leading-relaxed">I'm a self-driven AI Engineer with a passion for building intelligent systems that create real-world impact. Currently based in Mumbai, India, I bring a collaborative approach to every project and a commitment to continuous learning.</p>
+          <p className="text-lg text-foreground/90 leading-relaxed">I'm a self-driven AI Engineer with a passion for building intelligent systems that create real-world impact. I bring a collaborative approach to every project and a commitment to continuous learning.</p>
           
           <p className="text-lg text-foreground/90 leading-relaxed">
             My expertise spans across Python, TypeScript, Java, Kotlin, and Swift, with a particular focus on the 
