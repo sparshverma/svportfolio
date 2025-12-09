@@ -48,10 +48,10 @@ export const Hero = () => {
           
           {/* Social Links */}
           <div className="flex justify-center gap-4 pt-4">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
+            <a href="https://github.com/sparshverma" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Github className="w-5 h-5" />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
+            <a href="https://www.linkedin.com/in/sparsh-verma-7773571a1/" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Linkedin className="w-5 h-5" />
             </a>
             <a href="mailto:sparsh@example.com" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
