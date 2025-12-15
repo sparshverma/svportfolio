@@ -18,8 +18,8 @@ export const About = () => {
           </p>
           
           <p className="text-lg text-foreground/90 leading-relaxed">
-            Beyond technical skills, I'm actively developing my project management capabilities through comprehensive 
-            courses (PMP, PRINCE2 certified instructors) to better lead and deliver complex initiatives.
+            
+I believe in staying sharp through learning. I've picked up certifications in Kubernetes, completed programs with Goldman Sachs and Accenture, and earned an AI journalism proficiency certification. But honestly, I care more about staying curious and adding real value than I do about collecting credentials. At the end of the day, what matters to me is being honest, working well with others, and treating people with respect.
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 pt-8">
