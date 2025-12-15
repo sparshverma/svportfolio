@@ -6,16 +6,16 @@ export const About = () => {
         </h2>
         
         <div className="glass-card glow-hover rounded-2xl p-8 md:p-12 space-y-6">
-          <p className="text-lg text-foreground/90 leading-relaxed">I'm an AI Engineer who genuinely enjoys working on things that matter—turning complex ideas into systems that actually help people. I focus on AI, cybersecurity, and full-stack development because I believe technology should be practical, honest, and built with real intent. I try to approach my work collaboratively and stay grounded, rather than getting caught up in titles or hype.
-
-
-        </p>
-          
-          
+          <p className="text-lg text-foreground/90 leading-relaxed">
+            I'm an AI Engineer who genuinely enjoys working on things that matter—turning complex ideas into systems that actually help people. I focus on AI, cybersecurity, and full-stack development because I believe technology should be practical, honest, and built with real intent. I try to approach my work collaboratively and stay grounded, rather than getting caught up in titles or hype.
+          </p>
           
           <p className="text-lg text-foreground/90 leading-relaxed">
-            
-I believe in staying sharp through learning. I've picked up certifications in Kubernetes, completed programs with Goldman Sachs and Accenture, and earned an AI journalism proficiency certification. But honestly, I care more about staying curious and adding real value than I do about collecting credentials. At the end of the day, what matters to me is being honest, working well with others, and treating people with respect.
+            Beyond day-to-day engineering, I'm curious about how AI intersects with security and communication. I've explored this through projects like Cyber.ai and by experimenting with AI journalism, which has taught me to think about how technology really impacts people. I'm also interested in sovereign blockchain design—the idea of building systems that are transparent and built to last.
+          </p>
+          
+          <p className="text-lg text-foreground/90 leading-relaxed">
+            I believe in staying sharp through learning. I've picked up certifications in Kubernetes, completed programs with Goldman Sachs and Accenture, and earned an AI journalism proficiency certification. But honestly, I care more about staying curious and adding real value than I do about collecting credentials. At the end of the day, what matters to me is being honest, working well with others, and treating people with respect.
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 pt-8">
