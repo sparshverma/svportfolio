@@ -14,7 +14,8 @@ export const About = () => {
           <p className="text-lg text-foreground/90 leading-relaxed">
             My expertise spans across Python, TypeScript, Java, Kotlin, and Swift, with a particular focus on the 
             intersection of AI and Cybersecurity. I recently published a research paper titled{" "}
-            <span className="text-primary font-semibold">"Cyber.ai"</span> exploring this critical domain.
+            <span className="text-primary font-semibold">
+I believe in staying sharp through learning. I've picked up certifications in Kubernetes, completed programs with Goldman Sachs and Accenture, and earned an AI journalism proficiency certification. But honestly, I care more about staying curious and adding real value than I do about collecting credentials. At the end of the day, what matters to me is being honest, working well with others, and treating people with respect.</span> exploring this critical domain.
           </p>
           
           <p className="text-lg text-foreground/90 leading-relaxed">
