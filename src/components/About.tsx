@@ -11,11 +11,7 @@ export const About = () => {
 
         </p>
           
-          <p className="text-lg text-foreground/90 leading-relaxed">
-            My expertise spans across Python, TypeScript, Java, Kotlin, and Swift, with a particular focus on the 
-            intersection of AI and Cybersecurity. I recently published a research paper titled{" "}
-            <span className="text-primary font-semibold">"Cyber.ai"</span> exploring this critical domain.
-          </p>
+          
           
           <p className="text-lg text-foreground/90 leading-relaxed">
             
