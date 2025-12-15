@@ -1,9 +1,9 @@
 import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import cyberAi from "@/assets/cyber-ai.jpg";
-import projectHyVuln from "@/assets/project-hyvuln.jpg";
 import projectMax from "@/assets/project-max.jpg";
 import projectRagChat from "@/assets/project-ragchat.jpg";
+import projectRwaChain from "@/assets/project-rwachain.png";
 
 const projects = [
   {
@@ -17,12 +17,12 @@ const projects = [
     },
   },
   {
-    title: "HyVuln",
-    description: "A Hybrid vulnerability scanner, a comprehensive security tool for real-time cybersecurity assessment. Processed 10,000+ vulnerability patterns with 92% detection accuracy.",
-    image: projectHyVuln,
-    tags: ["Python", "Security", "Vulnerability Scanner", "Cybersecurity"],
+    title: "RWA-Chain",
+    description: "Sovereign Layer 1 Blockchain for Real-World Assets. Empowering RWAs, Identity, and DePIN with transparent infrastructure protocol.",
+    image: projectRwaChain,
+    tags: ["Blockchain", "Layer 1", "DePIN", "Web3"],
     links: {
-      github: "#",
+      github: "https://github.com/sparshverma/rwa-chain",
       live: "#",
     },
   },
