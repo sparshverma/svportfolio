@@ -59,26 +59,37 @@ const certifications = [
 
 export const Certifications = () => {
   return (
-    <section id="certifications" className="py-20 px-6 bg-muted/20">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
-          <span className="gradient-text">Certifications</span>
-        </h2>
+    <section id="certifications" className="py-24 px-6 relative overflow-hidden">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent pointer-events-none" />
+      
+      <div className="max-w-6xl mx-auto relative">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="gradient-text">Certifications</span>
+          </h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Professional credentials and achievements
+          </p>
+        </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {certifications.map((cert, index) => {
             const content = (
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-primary/10 rounded-lg shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <Award className="w-5 h-5 text-primary" />
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="relative p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
+                    <Award className="w-5 h-5 text-primary" />
+                  </div>
                 </div>
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground leading-tight">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-start gap-2">
+                    <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
                       {cert.title}
                     </h3>
                     {cert.link && (
-                      <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 mt-0.5" />
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{cert.issuer}</p>
@@ -86,23 +97,37 @@ export const Certifications = () => {
               </div>
             );
 
+            const cardClasses = `
+              relative rounded-2xl p-5 
+              bg-gradient-to-br from-card/80 to-card/40
+              backdrop-blur-sm
+              border border-border/50
+              hover:border-primary/30
+              hover:shadow-lg hover:shadow-primary/5
+              transition-all duration-500 ease-out
+              group
+              hover:-translate-y-1
+            `;
+
             return cert.link ? (
               <a
                 key={index}
                 href={cert.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-card rounded-xl p-5 hover:border-primary/50 transition-all duration-300 group block"
+                className={cardClasses}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 {content}
               </a>
             ) : (
               <div
                 key={index}
-                className="glass-card rounded-xl p-5 hover:border-primary/50 transition-all duration-300 group"
+                className={cardClasses}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 {content}
               </div>
             );
