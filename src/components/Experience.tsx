@@ -1,4 +1,4 @@
-import { Briefcase } from "lucide-react";
+import { Briefcase, Calendar } from "lucide-react";
 
 const experiences = [
   {
@@ -33,44 +33,59 @@ const experiences = [
 
 export const Experience = () => {
   return (
-    <section id="experience" className="py-20 px-6 bg-muted/20">
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
+    <section id="experience" className="py-20 px-6 relative overflow-hidden">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent pointer-events-none" />
+      
+      <div className="max-w-5xl mx-auto relative">
+        <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">
           <span className="gradient-text">Experience</span>
         </h2>
         
         <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-secondary to-primary opacity-30" />
+          {/* Timeline line with gradient */}
+          <div className="absolute left-[18px] md:left-8 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary/60 via-secondary/40 to-primary/20" />
           
-          <div className="space-y-8">
+          <div className="space-y-6">
             {experiences.map((exp, index) => (
               <div
                 key={exp.title}
-                className="relative pl-20 animate-fade-in"
+                className="relative pl-12 md:pl-20 animate-fade-in group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                {/* Timeline dot */}
-                <div className="absolute left-6 top-6 w-5 h-5 rounded-full bg-primary shadow-glow" />
+                {/* Timeline dot with glow */}
+                <div className="absolute left-2 md:left-[22px] top-8 w-4 h-4 rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)] group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.7)] transition-shadow duration-500" />
                 
-                <div className="glass-card glow-hover rounded-2xl p-6 space-y-3">
-                  <div className="flex items-start justify-between flex-wrap gap-2">
-                    <div>
-                      <h3 className="text-2xl font-bold">{exp.title}</h3>
-                      <p className="text-primary font-medium">{exp.organization}</p>
+                {/* Card */}
+                <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-500 ease-out overflow-hidden">
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  <div className="relative space-y-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between flex-wrap gap-3">
+                      <div>
+                        <h3 className="text-xl md:text-2xl font-bold group-hover:text-primary transition-colors duration-300">{exp.title}</h3>
+                        <p className="text-primary/80 font-medium mt-1">{exp.organization}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {exp.period}
+                      </span>
                     </div>
-                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                      {exp.period}
-                    </span>
-                  </div>
-                  
-                  <p className="text-muted-foreground leading-relaxed">
-                    {exp.description}
-                  </p>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Briefcase className="w-4 h-4" />
-                    {exp.type}
+                    
+                    {/* Description */}
+                    <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
+                      {exp.description}
+                    </p>
+                    
+                    {/* Type badge */}
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-xs font-medium">
+                        <Briefcase className="w-3 h-3" />
+                        {exp.type}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
