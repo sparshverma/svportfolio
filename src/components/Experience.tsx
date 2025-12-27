@@ -2,18 +2,18 @@ import { Briefcase, Calendar } from "lucide-react";
 
 const experiences = [
   {
-    title: "AI Research",
-    organization: "Queen Mary University of London",
-    period: "2023 - 2024",
-    description: "Conducted research in AI and cybersecurity, culminating in the publication of 'Cyber.ai'. Focused on intelligent threat detection and automated security systems.",
-    type: "Academic",
-  },
-  {
     title: "Data Administrator",
     organization: "Fullers Smith and Turner",
     period: "03/2024 - 11/2025",
     description: "Maintained 99.5% data integrity across multiple databases serving critical business operations. Troubleshoot database issues and resolve problems promptly. Created interactive Power BI dashboards serving 200+ stakeholders, improving decision-making efficiency by 25%. Implemented ETL pipelines using Hadoop, Spark, and Kafka, reducing data processing time by 35%. Ensuring all employment regulations are followed, including working hours, payroll, health and safety.",
     type: "Data",
+  },
+  {
+    title: "AI Research",
+    organization: "Queen Mary University of London",
+    period: "2023 - 2024",
+    description: "Conducted research in AI and cybersecurity, culminating in the publication of 'Cyber.ai'. Focused on intelligent threat detection and automated security systems.",
+    type: "Academic",
   },
   {
     title: "Brand Ambassador",
@@ -43,18 +43,44 @@ export const Experience = () => {
         </h2>
         
         <div className="relative">
-          {/* Timeline line with gradient */}
-          <div className="absolute left-[18px] md:left-8 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary/60 via-secondary/40 to-primary/20" />
+          {/* Curved SVG Timeline */}
+          <svg
+            className="absolute left-[18px] md:left-8 top-0 h-full w-12 pointer-events-none"
+            viewBox="0 0 48 100"
+            preserveAspectRatio="none"
+            fill="none"
+          >
+            <defs>
+              <linearGradient id="timelineGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 8 0 
+                 C 8 5, 8 7, 24 12.5 
+                 C 40 18, 40 20, 24 25 
+                 C 8 30, 8 32, 24 37.5 
+                 C 40 43, 40 45, 24 50 
+                 C 8 55, 8 57, 24 62.5 
+                 C 40 68, 40 70, 24 75 
+                 C 8 80, 8 82, 8 100"
+              stroke="url(#timelineGradient)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
           
           <div className="space-y-6">
             {experiences.map((exp, index) => (
               <div
                 key={exp.title}
-                className="relative pl-12 md:pl-20 animate-fade-in group"
+                className="relative pl-16 md:pl-24 animate-fade-in group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Timeline dot with glow */}
-                <div className="absolute left-2 md:left-[22px] top-8 w-4 h-4 rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)] group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.7)] transition-shadow duration-500" />
+                <div className="absolute left-[14px] md:left-[30px] top-8 w-4 h-4 rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/0.5)] group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.7)] transition-shadow duration-500 z-10" />
                 
                 {/* Card */}
                 <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-6 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-500 ease-out overflow-hidden">
