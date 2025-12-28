@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
-import { MobiusStrip } from "./MobiusStrip";
+import { lazy, Suspense } from "react";
+
+// Lazy load Three.js component to reduce main-thread work
+const MobiusStrip = lazy(() => import("./MobiusStrip").then(m => ({ default: m.MobiusStrip })));
+
 export const Hero = () => {
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Subtle gradient background */}
@@ -12,8 +16,10 @@ export const Hero = () => {
       animationDelay: '1s'
     }} />
       
-      {/* 3D Möbius Strip */}
-      <MobiusStrip />
+      {/* 3D Möbius Strip - Lazy loaded */}
+      <Suspense fallback={<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />}>
+        <MobiusStrip />
+      </Suspense>
       
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
