@@ -9,11 +9,18 @@
     
     <link rel="icon" href="/favicon.png" type="image/png">
     
+    <!-- Critical CSS for immediate FCP -->
+    <style>
+      :root { --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; }
+      body { margin: 0; background: hsl(222.2 84% 4.9%); color: hsl(210 40% 98%); font-family: system-ui, -apple-system, sans-serif; }
+      #root { min-height: 100vh; }
+    </style>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"></noscript>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
 
     <meta property="og:title" content="Sparsh Verma - AI Engineer & Full-Stack Developer" />
     <meta property="og:description" content="AI Engineer and Full-Stack Developer specializing in machine learning, cybersecurity, and mobile development." />
