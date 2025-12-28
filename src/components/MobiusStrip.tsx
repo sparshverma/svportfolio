@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,7 +12,6 @@ const MobiusStripGeometry = () => {
     const width = 0.5;
     const vertices: number[] = [];
     const indices: number[] = [];
-    const normals: number[] = [];
 
     for (let i = 0; i <= segments; i++) {
       const u = (i / segments) * Math.PI * 2;
@@ -75,6 +74,26 @@ const MobiusStripGeometry = () => {
 };
 
 export const MobiusStrip = () => {
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Defer Three.js initialization to prevent forced reflow during initial paint
+  useEffect(() => {
+    // Use requestIdleCallback if available, otherwise use setTimeout
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(() => setShouldRender(true), { timeout: 1000 });
+      return () => window.cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(() => setShouldRender(true), 100);
+      return () => clearTimeout(id);
+    }
+  }, []);
+
+  if (!shouldRender) {
+    return (
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />
+    );
+  }
+
   return (
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0">
       <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
