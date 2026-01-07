@@ -2,7 +2,7 @@ import { Briefcase, Calendar } from "lucide-react";
 
 const experiences = [
   {
-    title: "Data Administrator",
+    title: "Data Analyst(Administrator)",
     organization: "Fullers Smith and Turner",
     period: "03/2024 - 11/2025",
     description: "Maintained 99.5% data integrity across multiple databases serving critical business operations. Troubleshoot database issues and resolve problems promptly. Created interactive Power BI dashboards serving 200+ stakeholders, improving decision-making efficiency by 25%. Implemented ETL pipelines using Hadoop, Spark, and Kafka, reducing data processing time by 35%. Ensuring all employment regulations are followed, including working hours, payroll, health and safety.",
