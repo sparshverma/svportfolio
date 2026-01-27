@@ -2,8 +2,8 @@ import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import cyberAi from "@/assets/cyber-ai.jpg";
 import projectMax from "@/assets/project-max.jpg";
-import projectRagChat from "@/assets/project-ragchat.jpg";
 import projectRwaChain from "@/assets/project-rwachain.png";
+import projectRedI from "@/assets/project-redi.png";
 
 const projects = [
   {
@@ -37,13 +37,13 @@ const projects = [
     },
   },
   {
-    title: "RagChat",
-    description: "Advanced RAG-based chatbot leveraging retrieval-augmented generation for intelligent document-based conversations and knowledge retrieval.",
-    image: projectRagChat,
-    tags: ["Python", "RAG", "LangChain", "AI Chatbot"],
+    title: "RedI - Intelligent Eye",
+    description: "RedI is a comprehensive visual AI web application that leverages cutting-edge on-device machine learning to provide real-time visual intelligence capabilities. Built with privacy as the foundation, all AI processing happens directly on your device.",
+    image: projectRedI,
+    tags: ["Visual AI", "Machine Learning", "Privacy", "Web App"],
     links: {
-      github: "#",
-      live: "#",
+      github: "https://github.com/sparshverma",
+      live: "https://red-i.tech",
     },
   },
 ];
