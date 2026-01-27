@@ -99,6 +99,16 @@ export default {
             transform: "translateY(0)"
           }
         },
+        "hero-fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(30px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          }
+        },
         "float": {
           "0%, 100%": {
             transform: "translateY(0px)"
@@ -123,6 +133,7 @@ export default {
         "fade-in-delay": "fade-in-delay 0.8s ease-out",
         "float": "float 6s ease-in-out infinite",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "hero-fade-in": "hero-fade-in 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards",
       },
     },
   },
