@@ -1,35 +1,45 @@
-import { Brain, Code2, Smartphone, Database, Cloud, GitBranch } from "lucide-react";
+import { Brain, Code2, Database, Cloud, BarChart3, Users, Cpu, Layers } from "lucide-react";
 
 const skillCategories = [
   {
     title: "Programming Languages",
     icon: Code2,
-    skills: ["Python", "TypeScript", "Java", "Kotlin", "Swift"],
+    skills: ["Python", "C/C++", "SQL", "JSON", "Kotlin", "Object-Oriented Design"],
   },
   {
-    title: "AI & Machine Learning",
+    title: "GenAI & Agentic AI",
     icon: Brain,
-    skills: ["Machine Learning", "Deep Learning", "Model Deployment", "Data Engineering", "IoT + ML Systems"],
+    skills: ["Large Language Models (LLMs)", "LangChain", "LangGraph", "RAG", "Prompt Engineering", "Hallucination Mitigation"],
   },
   {
-    title: "Software & Tools",
-    icon: Smartphone,
-    skills: ["Flutter", "Node.js", "React", "WebContainers", "Git"],
+    title: "ML & NLP",
+    icon: Cpu,
+    skills: ["Machine Learning Pipelines", "Deep Learning", "NLP", "NLU", "Reinforcement Learning", "Model Validation", "CNNs"],
   },
   {
-    title: "Cloud & DevOps",
+    title: "MLOps & Engineering",
     icon: Cloud,
-    skills: ["Docker", "AWS", "GCP", "CI/CD", "Microservices"],
+    skills: ["Kubernetes", "AWS", "Azure", "CI/CD Pipelines", "Model Deployment", "Pipeline Optimisation", "TensorRT"],
   },
   {
-    title: "Database",
+    title: "Big Data & ETL",
+    icon: Layers,
+    skills: ["Hadoop", "Spark", "Kafka", "Data Processing Automation", "KPI Reporting"],
+  },
+  {
+    title: "Databases & Tools",
     icon: Database,
-    skills: ["PostgreSQL", "MongoDB", "Redis", "Supabase"],
+    skills: ["MySQL", "Linux", "REST APIs", "Git", "Performance Monitoring", "API Integration"],
   },
   {
-    title: "Other Skills",
-    icon: GitBranch,
-    skills: ["Technical Writing", "Project Management", "Agile/Scrum", "Research"],
+    title: "Business Intelligence",
+    icon: BarChart3,
+    skills: ["Power BI", "Tableau", "BigQuery", "KPI Analytics", "Reporting Automation", "Credit Analysis"],
+  },
+  {
+    title: "Professional Strengths",
+    icon: Users,
+    skills: ["Stakeholder Communication", "Business Storytelling", "Product Analytics", "Cross-functional Collaboration", "Data Governance", "Agile / SDLC Practices"],
   },
 ];
 
