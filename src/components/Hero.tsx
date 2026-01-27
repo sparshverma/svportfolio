@@ -40,14 +40,12 @@ export const Hero = () => {
             </p>
           </div>
           
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="hero" size="lg">
-              View Projects
-            </Button>
-            <Button variant="glass" size="lg" asChild>
-              <a href="/Sparsh_Verma_CV.pdf" download>
+          {/* CTA Button */}
+          <div className="flex justify-center">
+            <Button variant="glass" size="lg" className="px-10 py-6 text-base group" asChild>
+              <a href="/Sparsh_Verma_CV.pdf" download className="flex items-center gap-3">
                 Download CV
+                <ArrowDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-1" />
               </a>
             </Button>
           </div>
