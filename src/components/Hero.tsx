@@ -23,25 +23,25 @@ export const Hero = () => {
       
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
-        <div className="space-y-12 animate-fade-in">
+        <div className="space-y-12">
           {/* Main content */}
           <div className="space-y-6 text-center">
             <div className="space-y-3">
-              <p className="text-sm uppercase tracking-wider text-muted-foreground font-medium">
+              <p className="text-sm uppercase tracking-wider text-muted-foreground font-medium opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.1s' }}>
                 AI Engineer • Data Analyst • Mobile Developer
               </p>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.3s' }}>
                 Sparsh Verma
               </h1>
             </div>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.5s' }}>
               Building intelligent systems that merge AI, security, and real-world impact
             </p>
           </div>
           
           {/* CTA Button */}
-          <div className="flex justify-center">
+          <div className="flex justify-center opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.7s' }}>
             <Button variant="glass" size="lg" className="px-10 py-6 text-base group" asChild>
               <a href="/Sparsh_Verma_CV.pdf" download className="flex items-center gap-3">
                 Download CV
@@ -51,7 +51,7 @@ export const Hero = () => {
           </div>
           
           {/* Social Links */}
-          <div className="flex justify-center gap-4 pt-4">
+          <div className="flex justify-center gap-4 pt-4 opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.9s' }}>
             <a href="https://github.com/sparshverma" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Github className="w-5 h-5" />
             </a>
