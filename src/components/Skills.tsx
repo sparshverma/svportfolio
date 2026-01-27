@@ -4,7 +4,7 @@ const skillCategories = [
   {
     title: "Programming Languages",
     icon: Code2,
-    skills: ["Python", "C/C++", "SQL", "TypeScript", "JSON", "Kotlin", "Object-Oriented Design"],
+    skills: ["Python", "C/C++", "Java", "SQL", "TypeScript", "JSON", "Kotlin", "Object-Oriented Design"],
   },
   {
     title: "GenAI & Agentic AI",
