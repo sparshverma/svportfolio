@@ -1,9 +1,9 @@
 import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import cyberAi from "@/assets/cyber-ai.jpg";
-import projectMax from "@/assets/project-max.jpg";
 import projectRwaChain from "@/assets/project-rwachain.png";
 import projectRedI from "@/assets/project-redi.png";
+import projectZitboard from "@/assets/project-zitboard.png";
 
 const projects = [
   {
@@ -27,13 +27,12 @@ const projects = [
     },
   },
   {
-    title: "Max",
-    description: "First AI GPT voice assistant, developed in Python using OpenAI and pyttsx3 libraries, implemented in an Android application using Android Studio.",
-    image: projectMax,
-    tags: ["Python", "OpenAI", "Android", "Voice AI"],
+    title: "ZitBoard",
+    description: "AI-powered revenue and hiring command center for sales analytics, forecasting, lead scoring, recruiting insights, and unified CRM.",
+    image: projectZitboard,
+    tags: ["SaaS", "AI", "Analytics", "CRM"],
     links: {
-      github: "https://github.com/sparshverma/Max",
-      live: "#",
+      live: "https://zitboard.dev",
     },
   },
   {
@@ -90,21 +89,23 @@ export const Projects = () => {
                 </div>
                 
                 <div className="flex gap-3 pt-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-2"
-                    asChild
-                  >
-                    <a 
-                      href={project.links.github} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                  {project.links.github && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-2"
+                      asChild
                     >
-                      <Github className="w-4 h-4" />
-                      Code
-                    </a>
-                  </Button>
+                      <a 
+                        href={project.links.github} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        <Github className="w-4 h-4" />
+                        Code
+                      </a>
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm" 
