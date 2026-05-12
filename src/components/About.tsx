@@ -28,7 +28,7 @@ export const About = () => {
               <h3 className="text-xl font-semibold text-foreground">Who I Am</h3>
             </div>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              I'm an AI Engineer who genuinely enjoys working on things that matter—turning complex ideas into systems that actually help people. I focus on AI, cybersecurity, and full-stack development because I believe technology should be practical, honest, and built with real intent. I try to approach my work collaboratively and stay grounded, rather than getting caught up in titles or hype.
+              I am an AI/ML Engineer and SaaS founder with a Master's in Artificial Intelligence from Queen Mary University of London and a B.Tech in Computer Science from VIT. Currently building ZitBoard, a full-stack SaaS platform I architected and shipped solo, now serving 100+ active users. Professionally, I bring hands-on experience across the full ML stack: agentic AI workflows, LLM orchestration with LangChain and LangGraph, large-scale ETL pipelines on Apache Spark, and production-grade NLP systems. I've built things that run in the real world, not just notebooks and I move fast without breaking the fundamentals.
             </p>
           </div>
 
