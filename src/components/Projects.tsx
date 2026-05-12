@@ -89,21 +89,23 @@ export const Projects = () => {
                 </div>
                 
                 <div className="flex gap-3 pt-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-2"
-                    asChild
-                  >
-                    <a 
-                      href={project.links.github} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                  {project.links.github && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-2"
+                      asChild
                     >
-                      <Github className="w-4 h-4" />
-                      Code
-                    </a>
-                  </Button>
+                      <a 
+                        href={project.links.github} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        <Github className="w-4 h-4" />
+                        Code
+                      </a>
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm" 
