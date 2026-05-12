@@ -2,10 +2,17 @@ import { Briefcase, Calendar } from "lucide-react";
 
 const experiences = [
   {
+    title: "Founder and Lead Software Engineer",
+    organization: "ZitBoard",
+    period: "02/2026 - Present",
+    description: "Product & Scale: Conceived, architected, and shipped a full-stack SaaS platform from zero to production, now serving 100+ active users with no co-founder, no agency, no shortcuts. Frontend Engineering: Built a high-performance marketing site and user dashboard in vanilla HTML, CSS, and JavaScript — no bloated frameworks, just fast, accessible, and clean interfaces that load instantly. Backend & Infrastructure: Designed and deployed the entire backend from scratch using Node.js and Supabase (PostgreSQL), provisioning cloud infrastructure on Vercel for Frontend and Azure for Backend services with Bicep templates and Docker for reproducible, scalable deployments. Quality & Reliability: Engineered end-to-end test pipelines with Playwright and custom Python automation scripts, integrating them directly into CI/CD — cutting production regressions significantly and shipping with confidence. Growth & Analytics: Wired up window.dataLayer event tracking and automated SEO validation pipelines to monitor the full user onboarding funnel and surface conversion drop-offs before they cost growth.",
+    type: "Founder",
+  },
+  {
     title: "Data Analyst(Administrator)",
     organization: "Fullers Smith and Turner",
     period: "03/2024 - 11/2025",
-    description: "Maintained 99.5% data integrity across multiple databases serving critical business operations. Troubleshoot database issues and resolve problems promptly. Created interactive Power BI dashboards serving 200+ stakeholders, improving decision-making efficiency by 25%. Implemented ETL pipelines using Hadoop, Spark, and Kafka, reducing data processing time by 35%. Ensuring all employment regulations are followed, including working hours, payroll, health and safety.",
+    description: "ML & Automation: Built and maintained Python-based machine learning models that automatically processed and scored 20,000+ daily transactions, helping operations teams make faster, more consistent decisions across 127 business units. ETL Pipelines: Designed and owned end-to-end ETL pipelines that moved, cleaned, and structured roughly 4TB of data every month across 127 business units, built on Apache Spark with same-day refresh cycles so models were never running on stale data. Anomaly Detection: Ran regular analysis across millions of transaction records to flag unusual patterns and outliers, surfacing findings that helped the business avoid roughly $10,000+ in losses each quarter. Dashboards & Reporting: Built and maintained live KPI dashboards in Power BI that gave leadership a clear, up-to-date view of business performance, replacing manual reporting and saving significant time each week. Cross-team Collaboration: Worked closely with product, engineering, and business teams to understand their data needs, translate them into analytical solutions, and deliver working models and reports on a roughly two-week turnaround.",
     type: "Data",
   },
   {
