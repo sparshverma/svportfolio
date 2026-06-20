@@ -68,34 +68,34 @@ export const Projects = () => {
             return (
               <article
                 key={project.title}
-                className="group relative glass-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/40 transition-all duration-500 ease-out animate-fade-in h-72 hover:shadow-glow"
+                className="group relative glass-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/40 transition-all duration-500 ease-out animate-fade-in md:h-72 hover:shadow-glow"
                 style={{ animationDelay: `${index * 120}ms` }}
               >
-                {/* Two-column reveal layout */}
-                <div className="grid grid-cols-[0fr_1fr] group-hover:grid-cols-[1fr_1fr] transition-[grid-template-columns] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] h-full">
-                  {/* Image side - expands on hover */}
-                  <div className="relative overflow-hidden">
+                {/* Mobile: stacked. Desktop: two-column reveal layout */}
+                <div className="flex flex-col md:grid md:grid-cols-[0fr_1fr] md:group-hover:grid-cols-[1fr_1fr] transition-[grid-template-columns] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] md:h-full">
+                  {/* Image side - always visible on mobile, expands on hover on desktop */}
+                  <div className="relative overflow-hidden h-48 md:h-auto">
                     <img
                       src={project.image}
                       alt={project.title}
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 scale-105 group-hover:scale-100 transition-all duration-700 ease-out"
+                      className="absolute inset-0 w-full h-full object-cover opacity-100 md:opacity-0 md:group-hover:opacity-100 md:scale-105 md:group-hover:scale-100 transition-all duration-700 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
 
                   {/* Description side */}
-                  <div className="relative p-6 md:p-7 flex flex-col justify-between h-full">
+                  <div className="relative p-6 md:p-7 flex flex-col justify-between md:h-full">
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <h3 className="text-2xl font-bold tracking-tight">
                           {project.title}
                         </h3>
-                        <span className="shrink-0 text-[10px] uppercase tracking-widest text-muted-foreground border border-border/60 rounded-full px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+                        <span className="shrink-0 text-[10px] uppercase tracking-widest text-muted-foreground border border-border/60 rounded-full px-2 py-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 md:delay-200">
                           {wordCount}w · {charCount}c
                         </span>
                       </div>
-                      <p className="text-sm md:text-[15px] text-muted-foreground leading-relaxed line-clamp-4 group-hover:line-clamp-none transition-all duration-500">
+                      <p className="text-sm md:text-[15px] text-muted-foreground leading-relaxed md:line-clamp-4 md:group-hover:line-clamp-none transition-all duration-500">
                         {project.description}
                       </p>
                     </div>
@@ -111,7 +111,7 @@ export const Projects = () => {
                           </span>
                         ))}
                       </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-500 delay-150">
+                      <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-1 md:group-hover:translate-y-0 transition-all duration-500 md:delay-150">
                         {project.links.github && (
                           <a
                             href={project.links.github}

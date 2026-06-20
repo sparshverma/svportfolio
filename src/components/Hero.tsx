@@ -28,7 +28,7 @@ export const Hero = () => {
           <div className="space-y-6 text-center">
             <div className="space-y-3">
               <p className="text-sm uppercase tracking-wider text-muted-foreground font-medium opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.1s' }}>
-                AI Engineer • Data Analyst • Mobile Developer
+                AI Engineer and Founder
               </p>
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.3s' }}>
                 Sparsh Verma
