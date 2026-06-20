@@ -1,0 +1,9 @@
+# Sparsh Verma
+
+> Portfolio of Sparsh Verma — AI/ML Engineer and SaaS founder building agentic AI workflows, LLM orchestration, and production NLP systems.
+
+Sparsh holds a Master's in AI from Queen Mary University of London and a Bachelor's in Computer Science from VIT. He is the founder of ZitBoard, a full-stack SaaS platform serving 100+ active users.
+
+## Pages
+
+- [Home](/): About, skills, featured projects, experience, education, certifications, and contact information.

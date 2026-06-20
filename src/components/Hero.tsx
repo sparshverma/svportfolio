@@ -52,13 +52,13 @@ export const Hero = () => {
           
           {/* Social Links */}
           <div className="flex justify-center gap-4 pt-4 opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.9s' }}>
-            <a href="https://github.com/sparshverma" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
+            <a href="https://github.com/sparshverma" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Github className="w-5 h-5" />
             </a>
-            <a href="https://www.linkedin.com/in/sparsh-verma-7773571a1/" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
+            <a href="https://www.linkedin.com/in/sparsh-verma-7773571a1/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Linkedin className="w-5 h-5" />
             </a>
-            <a href="mailto:sparsh@example.com" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
+            <a href="mailto:sparshv48@gmail.com" aria-label="Email Sparsh" className="p-3 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-300 hover:scale-110">
               <Mail className="w-5 h-5" />
             </a>
           </div>
@@ -66,7 +66,7 @@ export const Hero = () => {
       </div>
       
       {/* Minimal scroll indicator */}
-      <a href="#about" className="absolute bottom-12 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-primary transition-colors animate-bounce">
+      <a href="#about" aria-label="Scroll to About section" className="absolute bottom-12 left-1/2 -translate-x-1/2 text-muted-foreground hover:text-primary transition-colors animate-bounce">
         <ArrowDown className="w-5 h-5" />
       </a>
     </section>;
