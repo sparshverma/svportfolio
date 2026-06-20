@@ -33,7 +33,7 @@ export const Navigation = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#" className="text-2xl font-bold">
+          <a href="#" className="text-2xl font-bold" aria-label="Sparsh Verma — home">
             <span className="gradient-text">SV</span>
           </a>
 
@@ -56,6 +56,8 @@ export const Navigation = () => {
             size="icon"
             className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
