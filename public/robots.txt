@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://svportfolio.lovable.app/sitemap.xml
+Sitemap: https://sparshverma.me/sitemap.xml
