@@ -31,7 +31,7 @@ export const Hero = () => {
                 AI Engineer and Founder
               </p>
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.3s' }}>
-                Sparsh Verma
+                Sparsh Verma <span className="block text-2xl md:text-3xl lg:text-4xl font-medium text-muted-foreground mt-4">AI Engineer & Founder</span>
               </h1>
             </div>
             

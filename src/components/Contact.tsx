@@ -126,24 +126,24 @@ export const Contact = () => {
           {/* Contact Form */}
           <form onSubmit={handleSubmit} className="glass-card glow-hover rounded-2xl p-6 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
-              <Input placeholder="Your name" className="bg-muted/50 border-border/50" value={formData.name} onChange={e => setFormData({
+              <label htmlFor="contact-name" className="text-sm font-medium">Name</label>
+              <Input id="contact-name" name="name" placeholder="Your name" className="bg-muted/50 border-border/50" value={formData.name} onChange={e => setFormData({
               ...formData,
               name: e.target.value
             })} required />
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input type="email" placeholder="your.email@example.com" className="bg-muted/50 border-border/50" value={formData.email} onChange={e => setFormData({
+              <label htmlFor="contact-email" className="text-sm font-medium">Email</label>
+              <Input id="contact-email" name="email" type="email" placeholder="your.email@example.com" className="bg-muted/50 border-border/50" value={formData.email} onChange={e => setFormData({
               ...formData,
               email: e.target.value
             })} required />
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Message</label>
-              <Textarea placeholder="Your message..." className="bg-muted/50 border-border/50 min-h-32 resize-none" value={formData.message} onChange={e => setFormData({
+              <label htmlFor="contact-message" className="text-sm font-medium">Message</label>
+              <Textarea id="contact-message" name="message" placeholder="Your message..." className="bg-muted/50 border-border/50 min-h-32 resize-none" value={formData.message} onChange={e => setFormData({
               ...formData,
               message: e.target.value
             })} required />
