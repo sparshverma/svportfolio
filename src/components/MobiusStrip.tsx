@@ -87,6 +87,8 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
       binormal: new THREE.Vector3(),
       twistedNormal: new THREE.Vector3(),
       twistedBinormal: new THREE.Vector3(),
+      basis: new THREE.Matrix4(),
+      quat: new THREE.Quaternion(),
       m: new THREE.Matrix4(),
     }),
     [],
