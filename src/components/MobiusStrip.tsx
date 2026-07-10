@@ -313,7 +313,7 @@ const Scene = ({
     if (!cameraDrift) return;
     const t = state.clock.elapsedTime;
     camera.position.x = Math.sin(t * 0.15) * 0.12;
-    camera.position.y = 1.1 + Math.cos(t * 0.12) * 0.06;
+    camera.position.y = 0.4 + Math.cos(t * 0.12) * 0.06;
     camera.position.z = baseZRef.current + Math.sin(t * 0.1) * 0.1;
     camera.lookAt(0, 0, 0);
   });
