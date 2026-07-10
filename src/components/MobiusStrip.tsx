@@ -311,9 +311,11 @@ const Scene = ({
         <MobiusMesh
           key={i}
           enableCursorTilt={quality.enableCursorTilt}
-          offsetX={s.offsetX}
           finalScale={STRIP_SCALE}
           phase={s.phase}
+          extraRotX={s.extraRotX}
+          extraRotY={s.extraRotY}
+          extraRotZ={s.extraRotZ}
         />
       ))}
       <FpsReporter report={quality.report} />
