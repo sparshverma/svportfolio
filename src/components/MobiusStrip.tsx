@@ -75,10 +75,22 @@ const MobiusStripGeometry = () => {
 
 export const MobiusStrip = () => {
   const [shouldRender, setShouldRender] = useState(false);
+  const [hasWebGL, setHasWebGL] = useState(true);
 
-  // Defer Three.js initialization to prevent forced reflow during initial paint
   useEffect(() => {
-    // Use requestIdleCallback if available, otherwise use setTimeout
+    // Detect WebGL support to avoid crashing on sandboxed/unsupported contexts
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        setHasWebGL(false);
+        return;
+      }
+    } catch {
+      setHasWebGL(false);
+      return;
+    }
+
     if ('requestIdleCallback' in window) {
       const id = window.requestIdleCallback(() => setShouldRender(true), { timeout: 1000 });
       return () => window.cancelIdleCallback(id);
@@ -88,7 +100,7 @@ export const MobiusStrip = () => {
     }
   }, []);
 
-  if (!shouldRender) {
+  if (!hasWebGL || !shouldRender) {
     return (
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />
     );
@@ -96,7 +108,16 @@ export const MobiusStrip = () => {
 
   return (
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0">
-      <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
+      <Canvas
+        camera={{ position: [0, 0, 3.5], fov: 50 }}
+        fallback={null}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            setHasWebGL(false);
+          });
+        }}
+      >
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} color="#4ade80" />
         <pointLight position={[-10, -10, -10]} intensity={0.5} color="#22c55e" />
