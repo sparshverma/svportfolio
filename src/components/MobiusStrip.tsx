@@ -224,19 +224,26 @@ const MobiusMesh = ({
       // Progress wraps seamlessly via modulo — infinite loop.
       const theta = (data.baseTheta[i] + flow) % TWO_PI;
       const w = data.wOffset[i];
+      const halfT = theta * 0.5;
+      const cT = Math.cos(theta);
+      const sT = Math.sin(theta);
+      const cH = Math.cos(halfT);
+      const sH = Math.sin(halfT);
 
-      // Frenet-like basis from the Möbius parametrization itself.
-      // The parametrization's own cos(θ/2)/sin(θ/2) cross-section provides
-      // the intrinsic 180° twist per full revolution — plates cleanly
-      // transition inside↔outside as θ crosses 2π (two circuits home).
-      mobiusAt(theta, w, p);
-      mobiusAt(theta + eps, w, pNext);
-      mobiusAt(theta, w + eps, pWide);
-
-      tangent.subVectors(pNext, p).normalize();
-      bitangent.subVectors(pWide, p).normalize();
+      // Circular centerline (radius R) in the XY plane.
+      // Tangent runs along the direction of travel.
+      tangent.set(-sT, cT, 0);
+      // Radial outward direction in the ring's plane.
+      const radX = cT, radY = sT;
+      // Frame's "bitangent" (across-strip) starts as radial-outward and
+      // rotates around the tangent by θ/2 → after one lap (θ = 2π) the
+      // bitangent has flipped exactly 180°: the defining Möbius half-twist.
+      bitangent.set(radX * cH, radY * cH, sH);
       normal.crossVectors(tangent, bitangent).normalize();
-      bitangent.crossVectors(normal, tangent).normalize();
+
+      // Position: base ring point + across-strip offset along the twisted
+      // bitangent. This carries the plate rails through the twist.
+      p.set(R * cT + bitangent.x * w, R * sT + bitangent.y * w, bitangent.z * w);
 
       m.makeBasis(tangent, bitangent, normal);
       q.setFromRotationMatrix(m);
