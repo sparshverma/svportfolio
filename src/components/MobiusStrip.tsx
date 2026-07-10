@@ -387,7 +387,7 @@ export const MobiusStrip = () => {
       className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
       aria-hidden="true"
     >
-      <div className="w-full h-full max-w-[900px] max-h-[900px] aspect-square">
+      <div className="w-full h-full max-w-[520px] max-h-[520px] aspect-square">
         {shouldRender && (
           <Canvas
             dpr={quality.dpr}
