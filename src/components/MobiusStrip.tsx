@@ -40,6 +40,7 @@ function buildMobiusGeometry(
   elongation: number,
   colorA: THREE.Color,
   colorB: THREE.Color,
+  colorMid: THREE.Color,
 ): THREE.BufferGeometry {
   const uRes = uSegs;
   const vRes = vSegs + 1;
