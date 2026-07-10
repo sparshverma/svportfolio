@@ -227,6 +227,56 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
+/**
+ * Wide starfield that spans well beyond the Möbius bounds so it fills the
+ * whole hero. Slowly pans (drift + rotation) to feel alive.
+ */
+const WideStarfield = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const { positions, sizes } = useMemo(() => {
+    const N = 320;
+    const pos = new Float32Array(N * 3);
+    const sz = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      // Wide spread across XY; deep Z so stars stay behind the ring
+      pos[i * 3 + 0] = (Math.random() - 0.5) * 22;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 14;
+      pos[i * 3 + 2] = -6 - Math.random() * 8;
+      sz[i] = 0.6 + Math.random() * 1.6;
+    }
+    return { positions: pos, sizes: sz };
+  }, []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+    // Slow horizontal pan + gentle rotation for parallax feel
+    groupRef.current.position.x = Math.sin(t * 0.04) * 1.4;
+    groupRef.current.position.y = Math.cos(t * 0.03) * 0.6;
+    groupRef.current.rotation.z = t * 0.008;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} count={positions.length / 3} />
+          <bufferAttribute attach="attributes-size" args={[sizes, 1]} count={sizes.length} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.035}
+          sizeAttenuation
+          color="#F3ECDD"
+          transparent
+          opacity={0.55}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+    </group>
+  );
+};
+
 const Scene = ({
   quality,
 }: {
