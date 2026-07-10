@@ -26,10 +26,20 @@ const GOLD = new THREE.Color('#F3D46C');
 // Cursor state for subtle parallax tilt.
 const mouseTarget = { x: 0, y: 0 };
 
-const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
+const MobiusMesh = ({
+  enableCursorTilt,
+  offsetX = 0,
+  finalScale = 1,
+  phase = 0,
+}: {
+  enableCursorTilt: boolean;
+  offsetX?: number;
+  finalScale?: number;
+  phase?: number;
+}) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const scaleRef = useRef(0.6);
+  const scaleRef = useRef(0.6 * finalScale);
 
   // Flat, thin shingle: width along local X (0.5), height on Y (0.02), depth on Z (0.15).
   const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.02, 0.15), []);
