@@ -120,7 +120,7 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     const t = state.clock.getElapsedTime();
     const {
       pos, scale, tangent, normal, binormal,
-      twistedNormal, twistedBinormal, m,
+      twistedNormal, twistedBinormal, basis, quat, m,
     } = scratch;
 
     for (let i = 0; i < PLATE_COUNT; i++) {
