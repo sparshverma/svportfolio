@@ -14,9 +14,9 @@ import { FpsMeter } from '@/lib/perf/fpsMeter';
 // ---------------------------------------------------------------------------
 
 const R = 1.6;
-const ELONG = 2.05;
-const W = 0.42;
-const U_SEGMENTS = 320;
+const ELONG = 1.9;
+const W = 0.22;          // slim ribbon so the twist reads clearly
+const U_SEGMENTS = 400;  // extra resolution across the twist
 const V_SEGMENTS = 40;
 const TWO_PI = Math.PI * 2;
 
@@ -40,6 +40,7 @@ function buildMobiusGeometry(
   elongation: number,
   colorA: THREE.Color,
   colorB: THREE.Color,
+  colorMid: THREE.Color,
 ): THREE.BufferGeometry {
   const uRes = uSegs;
   const vRes = vSegs + 1;
@@ -69,9 +70,12 @@ function buildMobiusGeometry(
       uvs[idx * 2 + 0] = i / uSegs;
       uvs[idx * 2 + 1] = j / vSegs;
 
-      // Smooth cyclic gradient across the loop: 0→1→0 so the seam matches.
-      const t = 0.5 - 0.5 * Math.cos((TWO_PI * i) / uSegs);
-      tmp.copy(colorA).lerp(colorB, t);
+      // Seamless cyclic gradient along the loop: A → mid → B → mid → A.
+      const phase = i / uSegs;
+      if (phase < 0.25)      tmp.copy(colorA).lerp(colorMid, phase * 4);
+      else if (phase < 0.5)  tmp.copy(colorMid).lerp(colorB, (phase - 0.25) * 4);
+      else if (phase < 0.75) tmp.copy(colorB).lerp(colorMid, (phase - 0.5) * 4);
+      else                   tmp.copy(colorMid).lerp(colorA, (phase - 0.75) * 4);
       colors[idx * 3 + 0] = tmp.r;
       colors[idx * 3 + 1] = tmp.g;
       colors[idx * 3 + 2] = tmp.b;
@@ -111,6 +115,7 @@ type MobiusMeshProps = {
   quality: QualitySettings;
   primaryColor: string;
   secondaryColor: string;
+  midColor: string;
   rotationSpeed: number; // revolutions per second
   mouseTilt: boolean;
 };
@@ -119,6 +124,7 @@ const MobiusMesh = ({
   quality,
   primaryColor,
   secondaryColor,
+  midColor,
   rotationSpeed,
   mouseTilt,
 }: MobiusMeshProps) => {
@@ -129,8 +135,8 @@ const MobiusMesh = ({
 
   const [uSegs, vSegs] = useMemo(() => {
     if (quality.tier === 'high') return [U_SEGMENTS, V_SEGMENTS];
-    if (quality.tier === 'mid') return [220, 24];
-    return [160, 16];
+    if (quality.tier === 'mid') return [280, 28];
+    return [200, 18];
   }, [quality.tier]);
 
   const geometry = useMemo(
@@ -143,9 +149,11 @@ const MobiusMesh = ({
         ELONG,
         new THREE.Color(primaryColor),
         new THREE.Color(secondaryColor),
+        new THREE.Color(midColor),
       ),
-    [uSegs, vSegs, primaryColor, secondaryColor],
+    [uSegs, vSegs, primaryColor, secondaryColor, midColor],
   );
+
 
   // Glossy dielectric-leaning PBR: enough metalness to catch highlights as
   // the ribbon rolls through the light, low roughness for a polished sheen.
@@ -266,6 +274,7 @@ type SceneProps = {
   quality: QualitySettings & { report: (dt: number) => void };
   primaryColor: string;
   secondaryColor: string;
+  midColor: string;
   rotationSpeed: number;
   mouseTilt: boolean;
   cameraDrift: boolean;
@@ -275,6 +284,7 @@ const Scene = ({
   quality,
   primaryColor,
   secondaryColor,
+  midColor,
   rotationSpeed,
   mouseTilt,
   cameraDrift,
@@ -282,17 +292,20 @@ const Scene = ({
   const { camera, size } = useThree();
   const baseZRef = useRef(8);
 
+  // Fit strip to ~45% of viewport width (padding factor 1/0.45 ≈ 2.2), and
+  // frame it slightly above center so it sits behind the lower portion of
+  // the hero content rather than colliding with the heading.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 1.35;
-    const halfHeight = (R + W) * 1.55;
+    const halfWidth = (R + W) * ELONG * 2.4;
+    const halfHeight = (R + W) * 2.6;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     baseZRef.current = z;
-    camera.position.set(0, 0.3, z);
+    camera.position.set(0, 1.1, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
@@ -300,9 +313,8 @@ const Scene = ({
   useFrame((state) => {
     if (!cameraDrift) return;
     const t = state.clock.elapsedTime;
-    // Very subtle parallax drift — feels alive without being distracting.
     camera.position.x = Math.sin(t * 0.15) * 0.12;
-    camera.position.y = 0.3 + Math.cos(t * 0.12) * 0.08;
+    camera.position.y = 1.1 + Math.cos(t * 0.12) * 0.06;
     camera.position.z = baseZRef.current + Math.sin(t * 0.1) * 0.1;
     camera.lookAt(0, 0, 0);
   });
@@ -311,12 +323,8 @@ const Scene = ({
     <>
       <ambientLight intensity={0.35} color="#c8d3e0" />
       <hemisphereLight intensity={0.25} color="#e2e8f2" groundColor="#0a0d14" />
-
-      {/* Key light — warm, travels highlights across the ribbon. */}
       <directionalLight position={[6, 8, 5]} intensity={1.6} color="#fdf7e8" />
-      {/* Cool fill from opposite side. */}
       <directionalLight position={[-5, -2, 4]} intensity={0.5} color="#93a3b8" />
-      {/* Rim light from behind to separate the strip from the background. */}
       <directionalLight position={[0, 2, -6]} intensity={1.2} color="#a78bfa" />
 
       <Environment preset="studio" />
@@ -326,6 +334,7 @@ const Scene = ({
         quality={quality}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
+        midColor={midColor}
         rotationSpeed={rotationSpeed}
         mouseTilt={mouseTilt}
       />
@@ -348,6 +357,8 @@ export type MobiusStripProps = {
   primaryColor?: string;
   /** Gradient end color. Default: brand purple. */
   secondaryColor?: string;
+  /** Gradient mid-stop color (the highlight the twist passes through). Default: soft white. */
+  midColor?: string;
   /** Full revolutions around Y axis per second. Default: 1/18 (~18s per turn). */
   rotationSpeed?: number;
   /** Whether the strip tilts subtly toward the cursor. Default: true. */
@@ -359,6 +370,7 @@ export type MobiusStripProps = {
 export const MobiusStrip = ({
   primaryColor = '#3b82f6',
   secondaryColor = '#a855f7',
+  midColor = '#f1f5ff',
   rotationSpeed = 1 / 18,
   mouseTilt = true,
   cameraDrift = true,
@@ -453,6 +465,7 @@ export const MobiusStrip = ({
               quality={quality}
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
+              midColor={midColor}
               rotationSpeed={rotationSpeed}
               mouseTilt={mouseTilt}
               cameraDrift={cameraDrift}
