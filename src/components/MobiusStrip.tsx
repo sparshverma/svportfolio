@@ -348,7 +348,7 @@ export const MobiusStrip = () => {
         <Canvas
           dpr={quality.dpr}
           frameloop={visible ? 'always' : 'never'}
-          camera={{ position: [0, 0, 4.6], fov: 45 }}
+          camera={{ position: [0, 0, 3.4], fov: 45 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             gl.domElement.addEventListener('webglcontextlost', (e) => {
