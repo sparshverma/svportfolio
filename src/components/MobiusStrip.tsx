@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
@@ -37,7 +37,8 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     () =>
       new THREE.MeshStandardMaterial({
         metalness: 0.85,
-        roughness: 0.4,
+        roughness: 0.35,
+        envMapIntensity: 1.2,
         vertexColors: true,
       }),
     [],
@@ -86,6 +87,8 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
       binormal: new THREE.Vector3(),
       twistedNormal: new THREE.Vector3(),
       twistedBinormal: new THREE.Vector3(),
+      basis: new THREE.Matrix4(),
+      quat: new THREE.Quaternion(),
       m: new THREE.Matrix4(),
     }),
     [],
@@ -117,7 +120,7 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     const t = state.clock.getElapsedTime();
     const {
       pos, scale, tangent, normal, binormal,
-      twistedNormal, twistedBinormal, m,
+      twistedNormal, twistedBinormal, basis, quat, m,
     } = scratch;
 
     for (let i = 0; i < PLATE_COUNT; i++) {
@@ -156,9 +159,9 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
       //   local X (length, 0.5) → tangent   — forward along the path
       //   local Y (thickness, 0.02) → twisted normal — flat face normal
       //   local Z (width, 0.15) → twisted binormal — across the ribbon
-      m.makeBasis(tangent, twistedNormal, twistedBinormal);
-      m.setPosition(pos);
-      m.scale(scale);
+      basis.makeBasis(tangent, twistedNormal, twistedBinormal);
+      quat.setFromRotationMatrix(basis);
+      m.compose(pos, quat, scale);
       mesh.setMatrixAt(i, m);
     }
     mesh.instanceMatrix.needsUpdate = true;
@@ -257,11 +260,15 @@ const Scene = ({
 
   return (
     <>
-      {/* Clean minimal lighting: soft ambient + one sharp top-right-front key */}
-      <ambientLight intensity={0.3} color="#ffffff" />
+      {/* HDRI env map — required so metalness=0.85 surfaces reflect real
+          light instead of rendering pitch black. */}
+      <Environment preset="city" background={false} />
+
+      {/* Ambient fill + sharp angled key for crisp metallic edge highlights */}
+      <ambientLight intensity={0.4} color="#ffffff" />
       <directionalLight
-        position={[5, 5, 5]}
-        intensity={1.5}
+        position={[5, 10, 5]}
+        intensity={2.5}
         color="#ffffff"
         castShadow={false}
       />
