@@ -28,14 +28,18 @@ const mouseTarget = { x: 0, y: 0 };
 
 const MobiusMesh = ({
   enableCursorTilt,
-  offsetX = 0,
   finalScale = 1,
   phase = 0,
+  extraRotX = 0,
+  extraRotY = 0,
+  extraRotZ = 0,
 }: {
   enableCursorTilt: boolean;
-  offsetX?: number;
   finalScale?: number;
   phase?: number;
+  extraRotX?: number;
+  extraRotY?: number;
+  extraRotZ?: number;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
