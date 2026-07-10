@@ -70,9 +70,15 @@ function buildMobiusGeometry(
       uvs[idx * 2 + 0] = i / uSegs;
       uvs[idx * 2 + 1] = j / vSegs;
 
-      // Smooth cyclic gradient across the loop: 0→1→0 so the seam matches.
-      const t = 0.5 - 0.5 * Math.cos((TWO_PI * i) / uSegs);
-      tmp.copy(colorA).lerp(colorB, t);
+      // Seamless cyclic gradient along the loop: A → mid → B → mid → A.
+      // Using a triangle wave means the seam (i=0 and i=uRes) both land on A.
+      const phase = i / uSegs;              // 0..1
+      const tri = 1 - Math.abs(phase * 2 - 1); // 0→1→0
+      // Two-hop lerp: first half A→mid→B via tri, but we also want to hit B
+      // exactly at phase=0.5. Blend: base A↔B by phase folded, tint via mid.
+      const fold = phase < 0.5 ? phase * 2 : (1 - phase) * 2; // 0→1→0
+      tmp.copy(colorA).lerp(colorB, fold);
+      tmp.lerp(colorMid, tri * 0.55);
       colors[idx * 3 + 0] = tmp.r;
       colors[idx * 3 + 1] = tmp.g;
       colors[idx * 3 + 2] = tmp.b;
