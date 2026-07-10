@@ -141,9 +141,9 @@ const MobiusMesh = ({
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        metalness: 0.9,
-        roughness: 0.35,
-        envMapIntensity: 1.1,
+        metalness: 0.75,
+        roughness: 0.42,
+        envMapIntensity: 1.6,
         vertexColors: true,
       }),
     [],
