@@ -253,32 +253,54 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Four Möbius strips entangled at the origin — each oriented on a
-  // different axis so their rings weave through one another.
-  const STRIP_SCALE = 0.85;
-  const strips = useMemo(
-    () => [
-      { phase: 0,                extraRotX: 0,             extraRotY: 0,             extraRotZ: 0 },
-      { phase: Math.PI * 0.37,   extraRotX: Math.PI / 2,   extraRotY: 0,             extraRotZ: Math.PI / 6 },
-      { phase: Math.PI * 0.73,   extraRotX: 0,             extraRotY: Math.PI / 2,   extraRotZ: -Math.PI / 6 },
-      { phase: Math.PI * 1.11,   extraRotX: Math.PI / 3,   extraRotY: Math.PI / 3,   extraRotZ: Math.PI / 4 },
-    ],
-    [],
-  );
+  // Chain of four interlocked Möbius rings on a shared axis (world X).
+  // Adjacent rings alternate their plane 90° so they interlock like chain
+  // links; spacing = ring radius so they interlock without body overlap.
+  const STRIP_SCALE = 0.55;
+  const ringRadius = R * STRIP_SCALE;
+  const spacing = ringRadius; // interlock without overlap
+  const chainTiltRef = useRef<THREE.Group>(null);
 
-  // Fit-to-view: rings share the origin, bounding sphere ≈ R * STRIP_SCALE.
+  const strips = useMemo(() => {
+    return [0, 1, 2, 3].map((i) => ({
+      offsetX: (i - 1.5) * spacing,
+      perpendicular: i % 2 === 1,
+      phase: i * Math.PI * 0.41,
+    }));
+  }, [spacing]);
+
+  // Fit-to-view: chain extends horizontally, single ring vertically.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const bound = R * STRIP_SCALE * 1.35;
+    const halfWidth = 1.5 * spacing + ringRadius * 1.1;
+    const halfHeight = ringRadius * 1.35;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    const zForHeight = bound / Math.tan(fovRad / 2);
-    const zForWidth = bound / (Math.tan(fovRad / 2) * aspect);
+    const zForHeight = halfHeight / Math.tan(fovRad / 2);
+    const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, spacing, ringRadius]);
+
+  // Shared chain tilt (applied once to the whole chain group so rings stay
+  // interlocked correctly and share the same presentation angle).
+  useFrame(() => {
+    const g = chainTiltRef.current;
+    if (!g) return;
+    const baseX = -Math.PI / 3;         // -60°
+    const baseY = (20 * Math.PI) / 180; // +20°
+    if (quality.enableCursorTilt) {
+      const targetX = baseX + mouseTarget.y * 0.08;
+      const targetY = baseY + mouseTarget.x * 0.1;
+      g.rotation.x += (targetX - g.rotation.x) * 0.05;
+      g.rotation.y += (targetY - g.rotation.y) * 0.05;
+    } else {
+      g.rotation.x += (baseX - g.rotation.x) * 0.05;
+      g.rotation.y += (baseY - g.rotation.y) * 0.05;
+    }
+  });
 
   return (
     <>
@@ -296,17 +318,18 @@ const Scene = ({
       />
 
       {quality.enableStarfield && <WideStarfield />}
-      {strips.map((s, i) => (
-        <MobiusMesh
-          key={i}
-          enableCursorTilt={quality.enableCursorTilt}
-          finalScale={STRIP_SCALE}
-          phase={s.phase}
-          extraRotX={s.extraRotX}
-          extraRotY={s.extraRotY}
-          extraRotZ={s.extraRotZ}
-        />
-      ))}
+      <group ref={chainTiltRef}>
+        {strips.map((s, i) => (
+          <MobiusMesh
+            key={i}
+            enableCursorTilt={quality.enableCursorTilt}
+            finalScale={STRIP_SCALE}
+            phase={s.phase}
+            offsetX={s.offsetX}
+            perpendicular={s.perpendicular}
+          />
+        ))}
+      </group>
       <FpsReporter report={quality.report} />
     </>
   );
