@@ -1,86 +1,145 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Environment } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
 
 // ---------------------------------------------------------------------------
-// Möbius ribbon — clean minimal spec:
-//   • Exactly 120 instanced plates
-//   • Plate geometry: 0.5 (W) × 0.02 (H) × 0.15 (D)
-//   • Circular centerline, major radius R = 2.5
-//   • Per-plate twist of θ/2 around the tangent axis → true 180° Möbius flip
+// A single, mathematically correct Möbius strip built from a parametric
+// BufferGeometry surface with a properly stitched half-twist seam.
+//
+// Elongated (oval) centerline · continuous 180° twist · matte graphite
+// material · slow constant rotation revealing the twist naturally.
 // ---------------------------------------------------------------------------
 
-const PLATE_COUNT = 120;
-const R = 2.5;
+// Centerline base radius (Y axis). Elongation stretches X so the loop
+// reads as a long horizontal oval that wraps around the hero text.
+const R = 1.6;
+const ELONG = 2.05;      // major-axis multiplier along X
+const W = 0.42;          // ribbon half-width
+const U_SEGMENTS = 320;  // resolution along the loop
+const V_SEGMENTS = 14;   // resolution across the ribbon
 const TWO_PI = Math.PI * 2;
 
-// Palette — moody dark ribbon with warm gold accents
-const SLATE = new THREE.Color('#2c4a48');
-const CHARCOAL = new THREE.Color('#1a1c1e');
-const BRONZE = new THREE.Color('#6b3f22');
-const GOLD = new THREE.Color('#F3D46C');
-
-// Cursor state for subtle parallax tilt.
+// Cursor state for a whisper of parallax.
 const mouseTarget = { x: 0, y: 0 };
 
-const MobiusMesh = ({
-  finalScale = 1,
-  phase = 0,
-  offsetX = 0,
-  perpendicular = false,
-}: {
-  enableCursorTilt?: boolean;
-  finalScale?: number;
-  phase?: number;
-  offsetX?: number;
-  /** Rotate this ring 90° around the chain axis so it interlocks with neighbours. */
-  perpendicular?: boolean;
-}) => {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const scaleRef = useRef(0.6 * finalScale);
+/**
+ * Build a Möbius strip as an indexed BufferGeometry.
+ *
+ * Parametric surface:
+ *   x = (R + v·cos(u/2)) · cos(u) · elong
+ *   y = (R + v·cos(u/2)) · sin(u)
+ *   z =  v · sin(u/2)
+ * with u ∈ [0, 2π), v ∈ [-W, W].
+ *
+ * The last column (u = 2π) is intentionally NOT duplicated; instead the
+ * seam is stitched with triangles that connect column (uSegs-1) → column 0
+ * with v flipped (j ↔ vSegs-j). This produces the characteristic Möbius
+ * half-twist closure and computeVertexNormals yields continuous shading
+ * across the join.
+ */
+function buildMobiusGeometry(
+  uSegs: number,
+  vSegs: number,
+  radius: number,
+  halfWidth: number,
+  elongation: number,
+): THREE.BufferGeometry {
+  const uRes = uSegs;         // no duplicated seam column
+  const vRes = vSegs + 1;     // include both v edges
+  const vertCount = uRes * vRes;
 
-  // Flat, thin shingle: width along local X (0.5), height on Y (0.02), depth on Z (0.15).
-  const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.02, 0.15), []);
+  const positions = new Float32Array(vertCount * 3);
+  const uvs = new Float32Array(vertCount * 2);
+
+  for (let j = 0; j < vRes; j++) {
+    const v = -halfWidth + (2 * halfWidth * j) / vSegs;
+    for (let i = 0; i < uRes; i++) {
+      const u = (TWO_PI * i) / uSegs;
+      const c = Math.cos(u);
+      const s = Math.sin(u);
+      const ch = Math.cos(u / 2);
+      const sh = Math.sin(u / 2);
+      const r = radius + v * ch;
+
+      const idx = j * uRes + i;
+      positions[idx * 3 + 0] = r * c * elongation;
+      positions[idx * 3 + 1] = r * s;
+      positions[idx * 3 + 2] = v * sh;
+
+      uvs[idx * 2 + 0] = i / uSegs;
+      uvs[idx * 2 + 1] = j / vSegs;
+    }
+  }
+
+  const indices: number[] = [];
+  for (let j = 0; j < vSegs; j++) {
+    for (let i = 0; i < uRes; i++) {
+      const iNext = (i + 1) % uRes;
+      // Möbius seam: when wrapping i = uRes-1 → 0, flip v.
+      const seam = i === uRes - 1;
+      const jTop = j;
+      const jBot = j + 1;
+      const jTopNext = seam ? vSegs - jTop : jTop;
+      const jBotNext = seam ? vSegs - jBot : jBot;
+
+      const a = jTop * uRes + i;
+      const b = jBot * uRes + i;
+      const c = jTopNext * uRes + iNext;
+      const d = jBotNext * uRes + iNext;
+
+      // Two triangles per quad, wound so normals face outward.
+      indices.push(a, c, d, a, d, b);
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setIndex(indices);
+  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geom.computeVertexNormals();
+  geom.computeBoundingSphere();
+  return geom;
+}
+
+const MobiusMesh = ({
+  quality,
+}: {
+  quality: QualitySettings;
+}) => {
+  const outerRef = useRef<THREE.Group>(null);
+  const rotorRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const scaleRef = useRef(0.75);
+
+  // Adaptive tesselation — high quality on desktop, lighter on low-end.
+  const [uSegs, vSegs] = useMemo(() => {
+    if (quality.tier === 'high') return [U_SEGMENTS, V_SEGMENTS];
+    if (quality.tier === 'mid') return [220, 10];
+    return [160, 8];
+  }, [quality.tier]);
+
+  const geometry = useMemo(
+    () => buildMobiusGeometry(uSegs, vSegs, R, W, ELONG),
+    [uSegs, vSegs],
+  );
+
+  // Matte graphite/charcoal — dielectric (metalness = 0), soft roughness so
+  // the directional light reads as a gentle sheen across the twist, never
+  // as chrome or plastic.
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        metalness: 0.85,
-        roughness: 0.35,
-        envMapIntensity: 1.2,
-        vertexColors: true,
+        color: new THREE.Color('#20232a'),
+        roughness: 0.72,
+        metalness: 0.0,
+        side: THREE.DoubleSide,
+        flatShading: false,
       }),
     [],
   );
-
-  // Per-instance color tint (mostly slate/charcoal, sparse bronze/gold).
-  const colors = useMemo(() => {
-    const arr = new Float32Array(PLATE_COUNT * 3);
-    const tmp = new THREE.Color();
-    for (let i = 0; i < PLATE_COUNT; i++) {
-      const roll = Math.random();
-      let base: THREE.Color;
-      if (roll < 0.6) base = SLATE;
-      else if (roll < 0.85) base = CHARCOAL;
-      else if (roll < 0.96) base = BRONZE;
-      else base = GOLD;
-      tmp.copy(CHARCOAL).lerp(base, 0.55 + Math.random() * 0.4);
-      arr[i * 3 + 0] = tmp.r;
-      arr[i * 3 + 1] = tmp.g;
-      arr[i * 3 + 2] = tmp.b;
-    }
-    return arr;
-  }, []);
-
-  useEffect(() => {
-    if (!meshRef.current) return;
-    const attr = new THREE.InstancedBufferAttribute(colors, 3);
-    meshRef.current.instanceColor = attr;
-    attr.needsUpdate = true;
-  }, [colors]);
 
   useEffect(() => {
     return () => {
@@ -89,104 +148,42 @@ const MobiusMesh = ({
     };
   }, [geometry, material]);
 
-  // Reusable scratch objects — no per-frame allocations.
-  const scratch = useMemo(
-    () => ({
-      pos: new THREE.Vector3(),
-      scale: new THREE.Vector3(1, 1, 1),
-      tangent: new THREE.Vector3(),
-      normal: new THREE.Vector3(),
-      binormal: new THREE.Vector3(),
-      twistedNormal: new THREE.Vector3(),
-      twistedBinormal: new THREE.Vector3(),
-      basis: new THREE.Matrix4(),
-      quat: new THREE.Quaternion(),
-      m: new THREE.Matrix4(),
-    }),
-    [],
-  );
-
   useFrame((state, delta) => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-
-    // Entrance scale-in + fixed 3D presentation tilt.
-    // Group tilt: X = -60° (tip back), Y = +20° (yaw).
-    if (groupRef.current) {
-      scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
-      groupRef.current.scale.setScalar(scaleRef.current);
-    }
-
     const t = state.clock.getElapsedTime();
-    const {
-      pos, scale, tangent, normal, binormal,
-      twistedNormal, twistedBinormal, basis, quat, m,
-    } = scratch;
 
-    for (let i = 0; i < PLATE_COUNT; i++) {
-      // Per-plate angle around the loop, advancing continuously.
-      const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2 + phase;
-      const cT = Math.cos(theta);
-      const sT = Math.sin(theta);
+    // Entrance scale-in (once, then holds at 1).
+    if (outerRef.current) {
+      scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 2);
+      outerRef.current.scale.setScalar(scaleRef.current);
 
-      // Centerline on the circle in the XY plane, radius R.
-      pos.set(R * cT, R * sT, 0);
-
-      // Frenet-style frame for a circle at this point.
-      tangent.set(-sT, cT, 0);   // direction of travel
-      normal.set(-cT, -sT, 0);   // radial inward
-      binormal.set(0, 0, 1);     // world up
-
-      // Möbius half-angle twist: α = θ / 2. Rotate the (normal, binormal)
-      // cross-section frame around the tangent axis by α so it flips
-      // exactly 180° over one full lap (θ: 0 → 2π ⇒ α: 0 → π).
-      const alpha = theta / 2;
-      const cA = Math.cos(alpha);
-      const sA = Math.sin(alpha);
-
-      twistedNormal.set(
-        normal.x * cA + binormal.x * sA,
-        normal.y * cA + binormal.y * sA,
-        normal.z * cA + binormal.z * sA,
-      );
-      twistedBinormal.set(
-        -normal.x * sA + binormal.x * cA,
-        -normal.y * sA + binormal.y * cA,
-        -normal.z * sA + binormal.z * cA,
-      );
-
-      // Compose basis so plate axes map to the ribbon frame:
-      //   local X (length, 0.5) → tangent   — forward along the path
-      //   local Y (thickness, 0.02) → twisted normal — flat face normal
-      //   local Z (width, 0.15) → twisted binormal — across the ribbon
-      basis.makeBasis(tangent, twistedNormal, twistedBinormal);
-      quat.setFromRotationMatrix(basis);
-      m.compose(pos, quat, scale);
-      mesh.setMatrixAt(i, m);
+      // Fixed presentation tilt: ~30° back on X, subtle whisper of parallax
+      // from the pointer. No easing / bounce — just a slow lerp toward the
+      // resting pose so it settles smoothly on load.
+      const baseX = -0.52; // ~ -29.8°
+      const baseY = 0.14;  // ~ +8°
+      const targetX = baseX + mouseTarget.y * 0.05;
+      const targetY = baseY + mouseTarget.x * 0.06;
+      outerRef.current.rotation.x += (targetX - outerRef.current.rotation.x) * 0.04;
+      outerRef.current.rotation.y += (targetY - outerRef.current.rotation.y) * 0.04;
     }
-    mesh.instanceMatrix.needsUpdate = true;
+
+    // Constant-velocity rotation around the strip's local Y axis — one full
+    // revolution every 30s. This carries the twist smoothly through the
+    // light so the ribbon's surface orientation continuously changes.
+    if (rotorRef.current) {
+      const period = 30; // seconds per revolution
+      rotorRef.current.rotation.y = (t * TWO_PI) / period;
+    }
   });
 
-  // Nested groups: outer positions this link in the chain and applies the
-  // perpendicular alternation (so adjacent rings interlock); inner is the
-  // scaling/tilting group that animates on mount.
   return (
-    <group
-      position={[offsetX, 0, 0]}
-      rotation={perpendicular ? [Math.PI / 2, 0, 0] : [0, 0, 0]}
-    >
-      <group ref={groupRef}>
-        <instancedMesh
-          ref={meshRef}
-          args={[geometry, material, PLATE_COUNT]}
-          frustumCulled={false}
-        />
+    <group ref={outerRef}>
+      <group ref={rotorRef}>
+        <mesh ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />
       </group>
     </group>
   );
 };
-
-
 
 // ---------------------------------------------------------------------------
 // Starfield — preserved exactly as before (panning background layer).
@@ -252,83 +249,46 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Chain of four interlocked Möbius rings on a shared axis (world X).
-  // Adjacent rings alternate their plane 90° so they interlock like chain
-  // links; spacing = ring radius so they interlock without body overlap.
-  const STRIP_SCALE = 0.55;
-  const ringRadius = R * STRIP_SCALE;
-  const spacing = ringRadius; // interlock without overlap
-  const chainTiltRef = useRef<THREE.Group>(null);
-
-  const strips = useMemo(() => {
-    return [0, 1, 2, 3].map((i) => ({
-      offsetX: (i - 1.5) * spacing,
-      perpendicular: i % 2 === 1,
-      phase: i * Math.PI * 0.41,
-    }));
-  }, [spacing]);
-
-  // Fit-to-view: chain extends horizontally, single ring vertically.
+  // Fit-to-view: the elongated Möbius has extents ≈ (R+W)·ELONG on X and
+  // (R+W) on Y. Target ~75% of viewport width so the loop wraps around the
+  // hero text with room to spare in the centre.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = 1.5 * spacing + ringRadius * 1.1;
-    const halfHeight = ringRadius * 1.35;
+    const halfWidth = (R + W) * ELONG * 1.35; // 1/0.75 padding
+    const halfHeight = (R + W) * 1.55;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
-    camera.position.set(0, 0.2, z);
+    camera.position.set(0, 0.3, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height, spacing, ringRadius]);
-
-  // Shared chain tilt (applied once to the whole chain group so rings stay
-  // interlocked correctly and share the same presentation angle).
-  useFrame(() => {
-    const g = chainTiltRef.current;
-    if (!g) return;
-    const baseX = -Math.PI / 3;         // -60°
-    const baseY = (20 * Math.PI) / 180; // +20°
-    if (quality.enableCursorTilt) {
-      const targetX = baseX + mouseTarget.y * 0.08;
-      const targetY = baseY + mouseTarget.x * 0.1;
-      g.rotation.x += (targetX - g.rotation.x) * 0.05;
-      g.rotation.y += (targetY - g.rotation.y) * 0.05;
-    } else {
-      g.rotation.x += (baseX - g.rotation.x) * 0.05;
-      g.rotation.y += (baseY - g.rotation.y) * 0.05;
-    }
-  });
+  }, [camera, size.width, size.height]);
 
   return (
     <>
-      {/* HDRI env map — required so metalness=0.85 surfaces reflect real
-          light instead of rendering pitch black. */}
-      <Environment preset="city" background={false} />
-
-      {/* Ambient fill + sharp angled key for crisp metallic edge highlights */}
-      <ambientLight intensity={0.4} color="#ffffff" />
+      {/* Realistic ambient lighting — soft global fill + one directional
+          key that reveals the twist as it rolls through the light. */}
+      <ambientLight intensity={0.55} color="#c8d3e0" />
+      <hemisphereLight intensity={0.35} color="#e2e8f2" groundColor="#0a0d14" />
       <directionalLight
-        position={[5, 10, 5]}
-        intensity={2.5}
-        color="#ffffff"
+        position={[6, 8, 5]}
+        intensity={2.1}
+        color="#fdf7e8"
+        castShadow={false}
+      />
+      {/* Cool counter-fill from the opposite side so the far edge of the
+          ribbon reads instead of falling into pure black. */}
+      <directionalLight
+        position={[-5, -2, 4]}
+        intensity={0.55}
+        color="#93a3b8"
         castShadow={false}
       />
 
       {quality.enableStarfield && <WideStarfield />}
-      <group ref={chainTiltRef}>
-        {strips.map((s, i) => (
-          <MobiusMesh
-            key={i}
-            enableCursorTilt={quality.enableCursorTilt}
-            finalScale={STRIP_SCALE}
-            phase={s.phase}
-            offsetX={s.offsetX}
-            perpendicular={s.perpendicular}
-          />
-        ))}
-      </group>
+      <MobiusMesh quality={quality} />
       <FpsReporter report={quality.report} />
     </>
   );
@@ -409,7 +369,7 @@ export const MobiusStrip = () => {
         <Canvas
           dpr={quality.dpr}
           frameloop={visible ? 'always' : 'never'}
-          camera={{ position: [0, 0.2, 6], fov: 45 }}
+          camera={{ position: [0, 0.3, 8], fov: 42 }}
           gl={{
             antialias: true,
             alpha: true,
