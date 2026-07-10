@@ -1,113 +1,30 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
 
-// Shared cursor state (normalized -1..1). Updated by a window listener.
+// Shared cursor state (normalized -1..1).
 const mouseTarget = { x: 0, y: 0, active: 0 };
 
-// Palette from the Dribbble reference (Igor Backstrom — Möbius strip).
-const COPPER_A = new THREE.Color('#905429');
-const COPPER_B = new THREE.Color('#F3D46C');
-const TEAL_A = new THREE.Color('#325755');
-const TEAL_B = new THREE.Color('#576253');
+// Palette — Igor Backstrom Möbius reference.
+const BG = '#010101';
+const BRONZE = new THREE.Color('#563218');
+const TEAL = new THREE.Color('#325755');
+const GOLD = new THREE.Color('#F3D46C');
+const BRONZE_DEEP = new THREE.Color('#2a1a0d');
+const TEAL_DEEP = new THREE.Color('#1a2c2b');
 
-// Möbius parametrization: strip of half-width w, main radius R.
-const R = 1.35;
-const HALF_W = 0.42;
+// Möbius parameters.
+const R = 1.35;      // main radius
+const HALF_W = 0.42; // half band-width
 
 function mobiusPoint(u: number, v: number, out: THREE.Vector3) {
   const c = Math.cos(u / 2);
   const s = Math.sin(u / 2);
   const rr = R + v * c;
   out.set(rr * Math.cos(u), rr * Math.sin(u), v * s);
-}
-
-function buildInstances(count: number) {
-  const positions = new Float32Array(count * 3);
-  const quats = new Float32Array(count * 4);
-  const scales = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-
-  const p = new THREE.Vector3();
-  const pu = new THREE.Vector3();
-  const pv = new THREE.Vector3();
-  const tangent = new THREE.Vector3();
-  const bitangent = new THREE.Vector3();
-  const normal = new THREE.Vector3();
-  const m = new THREE.Matrix4();
-  const q = new THREE.Quaternion();
-  const tmpColor = new THREE.Color();
-
-  // Two rows of tiles across the band width so the strip reads as a filled ring.
-  const rows = 2;
-  const perRow = Math.max(1, Math.floor(count / rows));
-  const total = perRow * rows;
-
-  const rng = mulberry32(1337);
-
-  for (let r = 0; r < rows; r++) {
-    // v position within the band: two bands centered around ±HALF_W/2
-    const vBase = (r === 0 ? -0.5 : 0.5) * HALF_W;
-    for (let i = 0; i < perRow; i++) {
-      const idx = r * perRow + i;
-      const u = (i / perRow) * Math.PI * 2;
-
-      // Jitter along v and slight radial jitter for scattered edge look
-      const v = vBase + (rng() - 0.5) * HALF_W * 0.35;
-
-      mobiusPoint(u, v, p);
-
-      // Finite-difference frame
-      const eps = 0.003;
-      mobiusPoint(u + eps, v, pu);
-      mobiusPoint(u, v + eps, pv);
-      tangent.subVectors(pu, p).normalize();
-      bitangent.subVectors(pv, p).normalize();
-      normal.crossVectors(tangent, bitangent).normalize();
-      // Re-orthogonalize bitangent so basis is clean
-      bitangent.crossVectors(normal, tangent).normalize();
-
-      // Build rotation matrix from basis: X=tangent, Y=bitangent, Z=normal
-      m.makeBasis(tangent, bitangent, normal);
-      q.setFromRotationMatrix(m);
-
-      // Small random spin around the tile normal for the "scattered shingle" feel
-      const spin = (rng() - 0.5) * 0.18; // ~±5°
-      const spinQ = new THREE.Quaternion().setFromAxisAngle(normal, spin);
-      q.multiply(spinQ);
-
-      positions[idx * 3 + 0] = p.x;
-      positions[idx * 3 + 1] = p.y;
-      positions[idx * 3 + 2] = p.z;
-      quats[idx * 4 + 0] = q.x;
-      quats[idx * 4 + 1] = q.y;
-      quats[idx * 4 + 2] = q.z;
-      quats[idx * 4 + 3] = q.w;
-
-      // Tile size: long along tangent, short across bitangent — thin shingles
-      const sx = 0.11 + rng() * 0.03;
-      const sy = HALF_W * 0.55 + rng() * 0.05;
-      const sz = 1;
-      scales[idx * 3 + 0] = sx;
-      scales[idx * 3 + 1] = sy;
-      scales[idx * 3 + 2] = sz;
-
-      // Face color: front vs back of the twisted band via sign(cos(u/2))
-      // The twist flips sides every full turn — use combined sign of cos(u/2) and row
-      const side = Math.sign(Math.cos(u / 2)) * (r === 0 ? 1 : -1);
-      const warm = side > 0;
-      const a = warm ? COPPER_A : TEAL_A;
-      const b = warm ? COPPER_B : TEAL_B;
-      tmpColor.copy(a).lerp(b, rng());
-      colors[idx * 3 + 0] = tmpColor.r;
-      colors[idx * 3 + 1] = tmpColor.g;
-      colors[idx * 3 + 2] = tmpColor.b;
-    }
-  }
-
-  return { positions, quats, scales, colors, count: total };
 }
 
 function mulberry32(seed: number) {
@@ -122,74 +39,155 @@ function mulberry32(seed: number) {
   };
 }
 
-const TiledMobius = ({
-  tileCount,
+/**
+ * Build instance transforms + colors for a Möbius strip made of tightly
+ * packed rectangular BLOCKS. Two rows across the width, N segments around.
+ */
+function buildInstances(segments: number) {
+  const rows = 2;
+  const count = segments * rows;
+
+  const matrices = new Float32Array(count * 16);
+  const colors = new Float32Array(count * 3);
+
+  const p = new THREE.Vector3();
+  const pu = new THREE.Vector3();
+  const pv = new THREE.Vector3();
+  const tangent = new THREE.Vector3();
+  const bitangent = new THREE.Vector3();
+  const normal = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+  const tmpColor = new THREE.Color();
+
+  const rng = mulberry32(9173);
+
+  // Tile size — width along the tangent direction chosen to just cover the
+  // circumference (tight packing) with a subtle gap.
+  const circumference = 2 * Math.PI * R;
+  const tileTangential = (circumference / segments) * 0.92;
+  const tileWidth = HALF_W * 0.92; // across the band (one row = half)
+
+  for (let r = 0; r < rows; r++) {
+    const vCenter = (r === 0 ? -0.5 : 0.5) * HALF_W;
+    for (let i = 0; i < segments; i++) {
+      const idx = r * segments + i;
+      const u = (i / segments) * Math.PI * 2;
+
+      mobiusPoint(u, vCenter, p);
+
+      // Local frame via finite differences
+      const eps = 0.003;
+      mobiusPoint(u + eps, vCenter, pu);
+      mobiusPoint(u, vCenter + eps, pv);
+      tangent.subVectors(pu, p).normalize();
+      bitangent.subVectors(pv, p).normalize();
+      normal.crossVectors(tangent, bitangent).normalize();
+      bitangent.crossVectors(normal, tangent).normalize();
+
+      m.makeBasis(tangent, bitangent, normal);
+      q.setFromRotationMatrix(m);
+
+      // Tiny random spin around the tile normal for organic segmentation
+      const spin = (rng() - 0.5) * 0.06;
+      const spinQ = new THREE.Quaternion().setFromAxisAngle(normal, spin);
+      q.multiply(spinQ);
+
+      // Slight per-tile scale jitter
+      const jitter = 0.94 + rng() * 0.12;
+      scale.set(
+        tileTangential * jitter,
+        tileWidth * (0.9 + rng() * 0.15),
+        0.035 + rng() * 0.02, // block thickness
+      );
+
+      m.compose(p, q, scale);
+      m.toArray(matrices, idx * 16);
+
+      // Face color: the twist means sign(cos(u/2)) tracks which "side" faces
+      // outward. Combine with row so both faces get their own palette.
+      const side = Math.sign(Math.cos(u / 2)) * (r === 0 ? 1 : -1);
+      const warm = side > 0;
+      const base = warm ? BRONZE : TEAL;
+      const deep = warm ? BRONZE_DEEP : TEAL_DEEP;
+      const highlight = warm ? GOLD : TEAL;
+      const t1 = rng();
+      const t2 = rng() * 0.35;
+      tmpColor.copy(deep).lerp(base, t1).lerp(highlight, t2);
+      colors[idx * 3 + 0] = tmpColor.r;
+      colors[idx * 3 + 1] = tmpColor.g;
+      colors[idx * 3 + 2] = tmpColor.b;
+    }
+  }
+
+  return { matrices, colors, count };
+}
+
+const MobiusMesh = ({
+  segments,
   enableCursorTilt,
 }: {
-  tileCount: number;
+  segments: number;
   enableCursorTilt: boolean;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6);
 
-  const { positions, quats, scales, colors, count } = useMemo(
-    () => buildInstances(tileCount),
-    [tileCount],
-  );
+  const { matrices, colors, count } = useMemo(() => buildInstances(segments), [segments]);
 
-  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        metalness: 0.85,
-        roughness: 0.38,
-        side: THREE.DoubleSide,
+        metalness: 0.9,
+        roughness: 0.35,
+        envMapIntensity: 1.1,
         vertexColors: true,
       }),
     [],
   );
 
-  // Apply per-instance matrices + colors once
   useEffect(() => {
     if (!meshRef.current) return;
     const mesh = meshRef.current;
     const m = new THREE.Matrix4();
-    const p = new THREE.Vector3();
-    const q = new THREE.Quaternion();
-    const s = new THREE.Vector3();
-    const colorArr = new THREE.InstancedBufferAttribute(colors, 3);
-    mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
     for (let i = 0; i < count; i++) {
-      p.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
-      q.set(quats[i * 4], quats[i * 4 + 1], quats[i * 4 + 2], quats[i * 4 + 3]);
-      s.set(scales[i * 3], scales[i * 3 + 1], scales[i * 3 + 2]);
-      m.compose(p, q, s);
+      m.fromArray(matrices, i * 16);
       mesh.setMatrixAt(i, m);
     }
     mesh.instanceMatrix.needsUpdate = true;
-    mesh.geometry.setAttribute('color', colorArr);
-    // Instanced meshes use `instanceColor` for per-instance tint
-    mesh.instanceColor = colorArr;
-  }, [positions, quats, scales, colors, count]);
+
+    const colorAttr = new THREE.InstancedBufferAttribute(colors, 3);
+    mesh.instanceColor = colorAttr;
+    colorAttr.needsUpdate = true;
+
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [matrices, colors, count, geometry, material]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
 
-    // Entrance
+    // Entrance scale-in
     scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
     groupRef.current.scale.setScalar(scaleRef.current);
 
-    // Baseline slow rotation
-    groupRef.current.rotation.y += delta * 0.28;
+    // Continuous hypnotic rotation — tilt slightly on X so ring reads as 3D
+    groupRef.current.rotation.y += delta * 0.32;
+    const baseTiltX = Math.sin(t * 0.15) * 0.12 - 0.25;
 
-    // Cursor tilt
     if (enableCursorTilt) {
-      const targetX = mouseTarget.y * 0.18;
+      const targetX = baseTiltX + mouseTarget.y * 0.18;
       const targetZ = mouseTarget.x * 0.14;
       groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
       groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
+    } else {
+      groupRef.current.rotation.x += (baseTiltX - groupRef.current.rotation.x) * 0.05;
     }
   });
 
@@ -199,49 +197,10 @@ const TiledMobius = ({
         ref={meshRef}
         args={[geometry, material, count]}
         frustumCulled={false}
+        castShadow={false}
+        receiveShadow={false}
       />
     </group>
-  );
-};
-
-const OrbitingLight = () => {
-  const ref = useRef<THREE.PointLight>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    const t = state.clock.elapsedTime * 0.5;
-    ref.current.position.set(Math.cos(t) * 3.2, Math.sin(t * 0.7) * 1.6, Math.sin(t) * 3.2);
-  });
-  return <pointLight ref={ref} intensity={0.9} color="#F3D46C" distance={12} />;
-};
-
-const Starfield = ({ count = 160 }: { count?: number }) => {
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 12;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 12;
-      arr[i * 3 + 2] = -3 - Math.random() * 5;
-    }
-    return arr;
-  }, [count]);
-  const ref = useRef<THREE.Points>(null);
-  useFrame((state) => {
-    if (ref.current) ref.current.rotation.z = state.clock.elapsedTime * 0.015;
-  });
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={count} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.025}
-        color="#F3ECDD"
-        transparent
-        opacity={0.25}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
   );
 };
 
@@ -250,32 +209,72 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   useFrame((_, delta) => {
     meterRef.current.push(delta);
     report(delta);
-    // expose for verification
     (window as unknown as { __mobiusFps?: number }).__mobiusFps = meterRef.current.avg();
   });
   return null;
 };
 
-const Scene = ({ quality }: { quality: QualitySettings & { report: (dt: number) => void } }) => {
+const Scene = ({
+  quality,
+}: {
+  quality: QualitySettings & { report: (dt: number) => void };
+}) => {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(0, 0, 3.4);
+    camera.position.set(0, 0.4, 3.6);
     camera.lookAt(0, 0, 0);
   }, [camera]);
+
+  // Segments scale with tier: high=140, mid=100, low=64 (× 2 rows)
+  const segments =
+    quality.tier === 'high' ? 140 : quality.tier === 'mid' ? 100 : 64;
+
   return (
     <>
-      <ambientLight intensity={0.18} />
-      {/* Warm key light */}
-      <pointLight position={[3, 2.5, 3.5]} intensity={1.6} color="#F3D46C" distance={14} />
-      {/* Cool rim light */}
-      <pointLight position={[-3.5, -1.5, -2]} intensity={1.1} color="#325755" distance={14} />
-      {quality.enableOrbitLight && <OrbitingLight />}
-      {quality.enableStarfield && <Starfield />}
-      <TiledMobius tileCount={quality.tileCount} enableCursorTilt={quality.enableCursorTilt} />
+      {/* Moody ambient for deep shadows */}
+      <ambientLight intensity={0.12} color="#221a12" />
+
+      {/* Warm key spotlight — catches the edges of the tiles */}
+      <spotLight
+        position={[4, 5, 4]}
+        angle={0.55}
+        penumbra={0.8}
+        intensity={12}
+        color="#F3D46C"
+        distance={18}
+        decay={1.2}
+        target-position={[0, 0, 0]}
+      />
+
+      {/* Cool rim light from behind for silhouette + teal glints */}
+      <spotLight
+        position={[-4, -2, -3]}
+        angle={0.7}
+        penumbra={1}
+        intensity={6}
+        color="#325755"
+        distance={16}
+        decay={1.4}
+        target-position={[0, 0, 0]}
+      />
+
+      {/* Very subtle fill so shadow side isn't pure black */}
+      <pointLight position={[0, 3, -4]} intensity={0.25} color="#563218" distance={12} />
+
+      <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
       <FpsReporter report={quality.report} />
     </>
   );
 };
+
+const LoadingIndicator = () => (
+  <Html center>
+    <div className="flex items-center gap-2 text-xs text-white/40 font-medium tracking-wider uppercase">
+      <div className="w-1.5 h-1.5 rounded-full bg-[#F3D46C] animate-pulse" />
+      Loading
+    </div>
+  </Html>
+);
 
 export const MobiusStrip = () => {
   const [shouldRender, setShouldRender] = useState(false);
@@ -342,24 +341,37 @@ export const MobiusStrip = () => {
   return (
     <div
       ref={wrapRef}
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] max-w-[95vw] max-h-[95vw] opacity-95 pointer-events-none z-0"
+      className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+      aria-hidden="true"
     >
-      {shouldRender && (
-        <Canvas
-          dpr={quality.dpr}
-          frameloop={visible ? 'always' : 'never'}
-          camera={{ position: [0, 0, 3.4], fov: 45 }}
-          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-          onCreated={({ gl }) => {
-            gl.domElement.addEventListener('webglcontextlost', (e) => {
-              e.preventDefault();
-              setHasWebGL(false);
-            });
-          }}
-        >
-          <Scene quality={quality} />
-        </Canvas>
-      )}
+      <div className="w-full h-full max-w-[900px] max-h-[900px] aspect-square">
+        {shouldRender && (
+          <Canvas
+            dpr={quality.dpr}
+            frameloop={visible ? 'always' : 'never'}
+            camera={{ position: [0, 0.4, 3.6], fov: 45 }}
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: 'high-performance',
+              toneMapping: THREE.ACESFilmicToneMapping,
+            }}
+            onCreated={({ gl }) => {
+              gl.toneMappingExposure = 1.05;
+              gl.domElement.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                setHasWebGL(false);
+              });
+            }}
+          >
+            <Suspense fallback={<LoadingIndicator />}>
+              <Scene quality={quality} />
+            </Suspense>
+          </Canvas>
+        )}
+      </div>
     </div>
   );
 };
+
+export default MobiusStrip;
