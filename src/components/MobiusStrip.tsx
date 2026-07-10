@@ -120,9 +120,9 @@ const MobiusMesh = ({
   const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const material = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
-      metalness: 0.72,
-      roughness: 0.48,
-      envMapIntensity: 1.8,
+      metalness: 0.9,
+      roughness: 0.62,
+      envMapIntensity: 2.1,
       vertexColors: true,
     });
 
