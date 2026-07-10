@@ -156,14 +156,15 @@ const MobiusMesh = ({
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Entrance scale-in on the group (visual only)
+    // Entrance scale-in on the group + slow axial twist rotation
     if (groupRef.current) {
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
 
-      // Subtle static tilt so ring reads as 3D — cursor can nudge it, but
-      // there is NO baseline rotation of the group (motion comes from tile
-      // flow instead).
+      // Slow axial "twist" — rotate the whole ring around its Y axis
+      groupRef.current.rotation.y += delta * 0.08;
+
+      // Static forward tilt so ring reads as 3D — cursor nudges it
       const baseTiltX = -0.32;
       if (enableCursorTilt) {
         const targetX = baseTiltX + mouseTarget.y * 0.15;
@@ -175,10 +176,8 @@ const MobiusMesh = ({
       }
     }
 
-    // Möbius "inside-out" flow: shift every tile's u by time. A full trip
-    // (u += 2π) puts each tile on the opposite side of the band — the strip
-    // appears to continuously turn through itself.
-    const uOffset = t * 0.55;
+    // Möbius "inside-out" flow — slower now that we also have axial twist
+    const uOffset = t * 0.18;
     const { p, pu, pv, tangent, bitangent, normal, m, q, spinQ, scale } = scratch;
     const eps = 0.003;
     const TWO_PI = Math.PI * 2;
