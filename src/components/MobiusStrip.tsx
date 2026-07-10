@@ -292,20 +292,19 @@ const Scene = ({
   const { camera, size } = useThree();
   const baseZRef = useRef(8);
 
-  // Fit strip to ~45% of viewport width (padding factor 1/0.45 ≈ 2.2), and
-  // frame it slightly above center so it sits behind the lower portion of
-  // the hero content rather than colliding with the heading.
+  // Frame the tilted, flattened loop to roughly fill the canvas horizontally
+  // while leaving generous vertical breathing room.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 2.4;
-    const halfHeight = (R + W) * 2.6;
+    const halfWidth = (R + W) * ELONG * 1.5;
+    const halfHeight = (R + W) * 1.8;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     baseZRef.current = z;
-    camera.position.set(0, 1.1, z);
+    camera.position.set(0, 0.4, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
