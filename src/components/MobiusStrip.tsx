@@ -40,88 +40,56 @@ function mulberry32(seed: number) {
 }
 
 /**
- * Build instance transforms + colors for a Möbius strip made of tightly
- * packed rectangular BLOCKS. Two rows across the width, N segments around.
+ * Precompute per-instance data (base u, v offset, jitter, color) for the
+ * Möbius strip. The actual world matrix is rebuilt every frame in useFrame
+ * so we can animate `u += t*speed` — tiles FLOW along the strip's path,
+ * producing the "turning inside out" effect (surface returns to start after
+ * two full trips, since a Möbius is one-sided).
  */
-function buildInstances(segments: number) {
+function buildInstanceData(segments: number) {
   const rows = 2;
   const count = segments * rows;
 
-  const matrices = new Float32Array(count * 16);
+  const baseU = new Float32Array(count);
+  const baseV = new Float32Array(count);
+  const spin = new Float32Array(count);
+  const scaleX = new Float32Array(count);
+  const scaleY = new Float32Array(count);
+  const scaleZ = new Float32Array(count);
   const colors = new Float32Array(count * 3);
-
-  const p = new THREE.Vector3();
-  const pu = new THREE.Vector3();
-  const pv = new THREE.Vector3();
-  const tangent = new THREE.Vector3();
-  const bitangent = new THREE.Vector3();
-  const normal = new THREE.Vector3();
-  const m = new THREE.Matrix4();
-  const q = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
   const tmpColor = new THREE.Color();
-
   const rng = mulberry32(9173);
 
-  // Tile size — width along the tangent direction chosen to just cover the
-  // circumference (tight packing) with a subtle gap.
   const circumference = 2 * Math.PI * R;
-  const tileTangential = (circumference / segments) * 0.92;
-  const tileWidth = HALF_W * 0.92; // across the band (one row = half)
+  const tileTangential = (circumference / segments) * 0.9;
+  const tileWidth = HALF_W * 0.92;
 
   for (let r = 0; r < rows; r++) {
     const vCenter = (r === 0 ? -0.5 : 0.5) * HALF_W;
     for (let i = 0; i < segments; i++) {
       const idx = r * segments + i;
       const u = (i / segments) * Math.PI * 2;
-
-      mobiusPoint(u, vCenter, p);
-
-      // Local frame via finite differences
-      const eps = 0.003;
-      mobiusPoint(u + eps, vCenter, pu);
-      mobiusPoint(u, vCenter + eps, pv);
-      tangent.subVectors(pu, p).normalize();
-      bitangent.subVectors(pv, p).normalize();
-      normal.crossVectors(tangent, bitangent).normalize();
-      bitangent.crossVectors(normal, tangent).normalize();
-
-      m.makeBasis(tangent, bitangent, normal);
-      q.setFromRotationMatrix(m);
-
-      // Tiny random spin around the tile normal for organic segmentation
-      const spin = (rng() - 0.5) * 0.06;
-      const spinQ = new THREE.Quaternion().setFromAxisAngle(normal, spin);
-      q.multiply(spinQ);
-
-      // Slight per-tile scale jitter
+      baseU[idx] = u;
+      baseV[idx] = vCenter;
+      spin[idx] = (rng() - 0.5) * 0.06;
       const jitter = 0.94 + rng() * 0.12;
-      scale.set(
-        tileTangential * jitter,
-        tileWidth * (0.9 + rng() * 0.15),
-        0.035 + rng() * 0.02, // block thickness
-      );
+      scaleX[idx] = tileTangential * jitter;
+      scaleY[idx] = tileWidth * (0.9 + rng() * 0.15);
+      scaleZ[idx] = 0.035 + rng() * 0.02;
 
-      m.compose(p, q, scale);
-      m.toArray(matrices, idx * 16);
-
-      // Face color: the twist means sign(cos(u/2)) tracks which "side" faces
-      // outward. Combine with row so both faces get their own palette.
       const side = Math.sign(Math.cos(u / 2)) * (r === 0 ? 1 : -1);
       const warm = side > 0;
       const base = warm ? BRONZE : TEAL;
       const deep = warm ? BRONZE_DEEP : TEAL_DEEP;
       const highlight = warm ? GOLD : TEAL;
-      const t1 = rng();
-      const t2 = rng() * 0.35;
-      tmpColor.copy(deep).lerp(base, t1).lerp(highlight, t2);
+      tmpColor.copy(deep).lerp(base, rng()).lerp(highlight, rng() * 0.35);
       colors[idx * 3 + 0] = tmpColor.r;
       colors[idx * 3 + 1] = tmpColor.g;
       colors[idx * 3 + 2] = tmpColor.b;
     }
   }
 
-  return { matrices, colors, count };
+  return { baseU, baseV, spin, scaleX, scaleY, scaleZ, colors, count };
 }
 
 const MobiusMesh = ({
@@ -135,7 +103,8 @@ const MobiusMesh = ({
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6);
 
-  const { matrices, colors, count } = useMemo(() => buildInstances(segments), [segments]);
+  const data = useMemo(() => buildInstanceData(segments), [segments]);
+  const { count, colors } = data;
 
   const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const material = useMemo(
@@ -149,46 +118,93 @@ const MobiusMesh = ({
     [],
   );
 
+  // Scratch vectors reused across frames — zero per-frame allocations
+  const scratch = useMemo(
+    () => ({
+      p: new THREE.Vector3(),
+      pu: new THREE.Vector3(),
+      pv: new THREE.Vector3(),
+      tangent: new THREE.Vector3(),
+      bitangent: new THREE.Vector3(),
+      normal: new THREE.Vector3(),
+      m: new THREE.Matrix4(),
+      q: new THREE.Quaternion(),
+      spinQ: new THREE.Quaternion(),
+      scale: new THREE.Vector3(),
+    }),
+    [],
+  );
+
+  // Set per-instance colors once
   useEffect(() => {
     if (!meshRef.current) return;
-    const mesh = meshRef.current;
-    const m = new THREE.Matrix4();
-    for (let i = 0; i < count; i++) {
-      m.fromArray(matrices, i * 16);
-      mesh.setMatrixAt(i, m);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
-
     const colorAttr = new THREE.InstancedBufferAttribute(colors, 3);
-    mesh.instanceColor = colorAttr;
+    meshRef.current.instanceColor = colorAttr;
     colorAttr.needsUpdate = true;
+  }, [colors]);
 
+  // Dispose on unmount
+  useEffect(() => {
     return () => {
       geometry.dispose();
       material.dispose();
     };
-  }, [matrices, colors, count, geometry, material]);
+  }, [geometry, material]);
 
   useFrame((state, delta) => {
-    if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
+    const mesh = meshRef.current;
+    if (!mesh) return;
 
-    // Entrance scale-in
-    scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
-    groupRef.current.scale.setScalar(scaleRef.current);
+    // Entrance scale-in on the group (visual only)
+    if (groupRef.current) {
+      scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
+      groupRef.current.scale.setScalar(scaleRef.current);
 
-    // Continuous hypnotic rotation — tilt slightly on X so ring reads as 3D
-    groupRef.current.rotation.y += delta * 0.32;
-    const baseTiltX = Math.sin(t * 0.15) * 0.12 - 0.25;
-
-    if (enableCursorTilt) {
-      const targetX = baseTiltX + mouseTarget.y * 0.18;
-      const targetZ = mouseTarget.x * 0.14;
-      groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
-      groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
-    } else {
-      groupRef.current.rotation.x += (baseTiltX - groupRef.current.rotation.x) * 0.05;
+      // Subtle static tilt so ring reads as 3D — cursor can nudge it, but
+      // there is NO baseline rotation of the group (motion comes from tile
+      // flow instead).
+      const baseTiltX = -0.32;
+      if (enableCursorTilt) {
+        const targetX = baseTiltX + mouseTarget.y * 0.15;
+        const targetZ = mouseTarget.x * 0.1;
+        groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
+        groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
+      } else {
+        groupRef.current.rotation.x += (baseTiltX - groupRef.current.rotation.x) * 0.05;
+      }
     }
+
+    // Möbius "inside-out" flow: shift every tile's u by time. A full trip
+    // (u += 2π) puts each tile on the opposite side of the band — the strip
+    // appears to continuously turn through itself.
+    const uOffset = t * 0.55;
+    const { p, pu, pv, tangent, bitangent, normal, m, q, spinQ, scale } = scratch;
+    const eps = 0.003;
+    const TWO_PI = Math.PI * 2;
+
+    for (let i = 0; i < count; i++) {
+      const u = (data.baseU[i] + uOffset) % TWO_PI;
+      const v = data.baseV[i];
+
+      mobiusPoint(u, v, p);
+      mobiusPoint(u + eps, v, pu);
+      mobiusPoint(u, v + eps, pv);
+      tangent.subVectors(pu, p).normalize();
+      bitangent.subVectors(pv, p).normalize();
+      normal.crossVectors(tangent, bitangent).normalize();
+      bitangent.crossVectors(normal, tangent).normalize();
+
+      m.makeBasis(tangent, bitangent, normal);
+      q.setFromRotationMatrix(m);
+      spinQ.setFromAxisAngle(normal, data.spin[i]);
+      q.multiply(spinQ);
+
+      scale.set(data.scaleX[i], data.scaleY[i], data.scaleZ[i]);
+      m.compose(p, q, scale);
+      mesh.setMatrixAt(i, m);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
   });
 
   return (
@@ -197,8 +213,6 @@ const MobiusMesh = ({
         ref={meshRef}
         args={[geometry, material, count]}
         frustumCulled={false}
-        castShadow={false}
-        receiveShadow={false}
       />
     </group>
   );
