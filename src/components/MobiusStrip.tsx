@@ -235,14 +235,14 @@ const Scene = ({
   const { camera, size } = useThree();
 
   // Fit-to-view: Möbius bounding radius ≈ R + HALF_W = 1.77. Compute the
-  // camera Z that fits that radius vertically (or horizontally on portrait)
-  // with a comfortable margin, using the current FOV.
+  // camera Z that fits that radius vertically (or horizontally on portrait).
+  // Divide by `fill` (< 1) to zoom in and make the ring appear larger.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const boundingR = R + HALF_W + 0.25; // margin
+    const fill = 0.72; // <1 = bigger strip in frame
+    const boundingR = (R + HALF_W) / fill;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    // Vertical half-height at z: z * tan(fov/2). Horizontal: z * tan(fov/2)*aspect.
     const zForHeight = boundingR / Math.tan(fovRad / 2);
     const zForWidth = boundingR / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
