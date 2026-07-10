@@ -159,9 +159,9 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
       //   local X (length, 0.5) → tangent   — forward along the path
       //   local Y (thickness, 0.02) → twisted normal — flat face normal
       //   local Z (width, 0.15) → twisted binormal — across the ribbon
-      m.makeBasis(tangent, twistedNormal, twistedBinormal);
-      m.setPosition(pos);
-      m.scale(scale);
+      basis.makeBasis(tangent, twistedNormal, twistedBinormal);
+      quat.setFromRotationMatrix(basis);
+      m.compose(pos, quat, scale);
       mesh.setMatrixAt(i, m);
     }
     mesh.instanceMatrix.needsUpdate = true;
