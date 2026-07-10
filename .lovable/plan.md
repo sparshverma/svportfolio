@@ -1,50 +1,65 @@
-# Plan: Cursor-Reactive 3D Möbius Strip
 
-Replace the current gently-rotating Möbius strip in the Hero with a richer, more three-dimensional, cursor-reactive version. Same file boundary — no changes to Hero layout, copy, or other sections.
+# Plan: Tiled Möbius Strip + Performance Profiling
 
-## What changes visually
+Recreate Igor Backstrom's Dribbble Möbius (dark scene, ring made of many small rectangular metallic tiles arranged along a twisted loop, warm copper on one face, cool teal/steel on the other, slow rotation with glinting highlights). Keep cursor reactivity from the current version but restyle geometry and materials to match. Add a real performance-profiling / adaptive-quality pass so it stays smooth on mobile and low-end GPUs.
 
-- Thicker, more sculptural Möbius band (tube-like cross-section instead of a flat ribbon) so it reads clearly as 3D from any angle.
-- Continuous flowing motion along the strip (animated gradient/emissive pulse traveling around the loop) so the surface always feels alive, not just spinning.
-- Cursor reactivity:
-  - Strip tilts toward the cursor with smooth lerp (parallax feel, subtle — max ~15°).
-  - Cursor proximity brightens emissive intensity and pushes a "glow bloom" hotspot along the surface nearest the pointer.
-  - Idle auto-rotation resumes when the cursor leaves the hero.
-- Depth cues: soft rim light + a second colored point light that orbits the strip, plus a faint particle field behind it for parallax.
-- Entrance: scale-in from 0.6 → 1 with a slight overshoot on mount (~1.2s).
+## Visual target (from reference)
 
-Palette stays on-brand (cyan `#22d3ee` primary, purple `#a855f7` secondary), matching existing neon accents.
+- Ring made of ~180-260 small flat rectangular tiles ("shingles") placed along a Möbius parametric path, each tile oriented to the local surface frame.
+- Slight per-tile random offset in radius, rotation (±5°) and scale — gives the broken/scattered look at the edges.
+- Two-tone material: warm copper (`#905429`/`#F3D46C`) on one side, cool teal/steel (`#325755`/`#576253`) on the other — single MeshStandardMaterial with vertex-color per tile face, or per-tile material index.
+- Deep black background (`#010101`), single warm key light + cool rim light so tiles catch specular glints as ring rotates.
+- Motion: slow continuous Y-rotation (~1 rev / 20s). Cursor gently tilts the whole ring (±10°) and boosts key-light intensity.
 
-## Technical approach
+## Files
 
-Stay on the existing stack — `@react-three/fiber@^8.18` + `@react-three/drei@^9.122` + `three` are already installed and working. No new deps.
+- `src/components/MobiusStrip.tsx` — rewrite geometry & materials:
+  - Replace `ParametricGeometry` mesh with an `InstancedMesh` of a single `PlaneGeometry(tileW, tileH)`.
+  - Compute N instance matrices along the Möbius parametrization: for each `u ∈ [0, 2π)` and one of a few `v` bands, build a TBN frame (tangent along `du`, normal via cross with `dv`) → `Matrix4.compose(position, quaternionFromBasis, scale)` with jitter.
+  - Assign instance colors via `InstancedBufferAttribute` — front face copper, back face teal, sampled from a small palette per tile.
+  - Material: `MeshStandardMaterial({ metalness: 0.85, roughness: 0.35, vertexColors: true, side: DoubleSide })`. Drop custom shader (heavier + doesn't match the physical/metal look).
+  - Keep starfield but dim it (opacity 0.25) and switch color to warm off-white so it doesn't fight the palette. Optional on low-tier.
+  - Keep cursor tilt + `prefers-reduced-motion` + `IntersectionObserver` pause + WebGL detection + `webglcontextlost` fallback.
 
-Files:
+- `src/components/Hero.tsx` — no structural change; only swap background gradient blobs' colors to warmer amber + teal to blend with new ring (single-line tweak, optional).
 
-- `src/components/MobiusStrip.tsx` — rewrite:
-  - Replace the hand-built `BufferGeometry` with a `ParametricGeometry` (from `three/examples/jsm/geometries/ParametricGeometry`) using the classic Möbius parametrization but with a **tube offset** on the normal to give real thickness, resulting in a solid, double-sided band with proper normals.
-  - Add a custom `shaderMaterial` (via drei's `shaderMaterial` helper) with uniforms: `uTime`, `uMouse` (vec2, normalized -1..1), `uMouseStrength`, `uColorA`, `uColorB`. Fragment shader mixes the two colors along the `v` coordinate + a traveling wave driven by `uTime`, and boosts emissive near the projected mouse position (Fresnel * proximity).
-  - `useFrame` loop:
-    - Lerp mesh rotation toward `(mouseY * 0.25, mouseX * 0.4, 0)`.
-    - Add constant slow Y-rotation as baseline.
-    - Advance `uTime`; lerp `uMouseStrength` toward 1 on pointer-move, decay to 0 on pointer-leave.
-  - Mouse tracking via a window `pointermove` listener on the hero container (normalized against viewport), plus `pointerleave` to reset. Keep existing WebGL feature detection + `webglcontextlost` fallback intact.
-  - Add a light `<Points>` starfield (drei `<Points>` or a plain buffer of ~200 points) behind the strip with additive blending for depth.
-  - Keep existing `requestIdleCallback` lazy mount and null fallback.
-- `src/components/Hero.tsx` — no structural change; only ensure the MobiusStrip container spans the hero so pointer events register across the section. Container stays `pointer-events-none` for the mesh itself (interaction driven by window pointer, not raycasting) so buttons remain clickable.
+- `src/lib/perf/useAdaptiveQuality.ts` — new hook (performance profiling pass):
+  - Detects device tier at mount:
+    - `navigator.hardwareConcurrency`, `navigator.deviceMemory`, `matchMedia('(pointer: coarse)')`, `matchMedia('(max-width: 768px)')`, `prefers-reduced-motion`.
+    - Reads `WEBGL_debug_renderer_info` unmasked renderer string; flags Adreno 3xx/4xx/5xx, Mali-4xx/T7xx, PowerVR SGX, Intel HD as `low`.
+  - Runtime FPS monitor: rolling 60-frame average via `useFrame`; if avg < 45 fps for 2s, step tier down (`high → mid → low`); if stable > 55 fps for 5s at `mid`, step back up (one-way to `low`).
+  - Exposes `{ tier, dpr, tileCount, enableStarfield, enableOrbitLight, shadows }`:
+    - high: dpr `[1, 2]`, 260 tiles, starfield on, orbit light on
+    - mid:  dpr `[1, 1.5]`, 180 tiles, starfield on, orbit light off
+    - low:  dpr `[1, 1]`, 110 tiles, starfield off, orbit light off, cursor tilt disabled
+  - `MobiusStrip.tsx` consumes hook to size instance count, DPR, and toggle extras. Instance count changes rebuild the `InstancedMesh` via a `useMemo` keyed on `tileCount`.
 
-Performance:
+- `src/lib/perf/fpsMeter.ts` — tiny helper: `class FpsMeter { push(dt); avg(): number }` used by the hook.
 
-- Cap DPR at `[1, 1.5]` on `<Canvas dpr={[1, 1.5]}>`.
-- `frameloop="always"` while visible; use `IntersectionObserver` to pause when Hero scrolls out.
-- Geometry generated once via `useMemo`; shader compiled once.
+## Verification loop
 
-Accessibility / fallbacks:
+After implementation, drive Playwright headless against `http://localhost:8080/`:
 
-- Respect `prefers-reduced-motion`: disable cursor tilt and traveling wave, keep only static strip with slow auto-rotate.
-- Retain existing WebGL absence fallback (blank div, no crash).
+1. Screenshot hero at 1280×1800 and at 390×844 (mobile). Save to `/tmp/browser/mobius/`.
+2. Compare against `tool-results://fetched-websites/dribbble.com_shots_4600977-M-bius-strip.png` visually (structural: ring silhouette, tiled edge, warm+cool split, black background). Target ≥90% qualitative match on: (a) segmented tile ring shape, (b) two-tone metallic palette, (c) black background, (d) single ring dominant in frame.
+3. Instrument: log `fpsMeter.avg()` at 3s and 8s via a `window.__mobiusFps` hook; assert ≥55 fps desktop, ≥30 fps in a throttled CPU 4× profile (Playwright CDP `Emulation.setCPUThrottlingRate`).
+4. If visual match < 90% (missing tile look, wrong palette, no rim highlights), iterate on: tile count, tile aspect ratio, jitter amplitude, light angles, material metalness/roughness. Re-screenshot and recompare. Stop when both visual and FPS gates pass.
 
 ## Out of scope
 
-- No changes to Hero copy, CTA, socials, other sections, routing, or SEO tags.
-- No new npm packages; no post-processing/bloom pass (keeps bundle small — the emissive + additive particles already deliver a glow feel).
+- No new npm packages (three, r3f, drei already present).
+- No changes to Hero copy, CTA, socials, nav, other sections, routing, SEO tags.
+- No post-processing/bloom pass (metallic material + point lights handle glints; bloom cost hurts low tier).
+
+## Technical notes
+
+- `InstancedMesh` with 260 plane instances = 1 draw call, ~1040 tris — cheaper than current `ParametricGeometry(220×40)` ≈ 17.6k tris and custom shader.
+- Möbius parametrization used per tile:
+  ```
+  x = (R + v·cos(u/2))·cos(u)
+  y = (R + v·cos(u/2))·sin(u)
+  z = v·sin(u/2)
+  ```
+  Tangent = ∂P/∂u, bitangent = ∂P/∂v, normal = tangent × bitangent → quaternion via `Matrix4.lookAt`.
+- Instance colors: pack RGB in `InstancedBufferAttribute('color', 3)`, sample per tile from `[copperA, copperB, tealA, tealB]` weighted by `sign(cos(u/2))` (front/back face of the twisted band).
+- FPS meter uses `performance.now()` deltas inside `useFrame`; avoids allocations (ring buffer of 60 floats).
