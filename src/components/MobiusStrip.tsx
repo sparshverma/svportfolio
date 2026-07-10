@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
@@ -9,36 +9,28 @@ import { FpsMeter } from '@/lib/perf/fpsMeter';
 // A single, mathematically correct Möbius strip built from a parametric
 // BufferGeometry surface with a properly stitched half-twist seam.
 //
-// Elongated (oval) centerline · continuous 180° twist · matte graphite
-// material · slow constant rotation revealing the twist naturally.
+// Glossy PBR material · smooth blue→purple vertex-color gradient across the
+// ribbon · slow constant rotation on Y with a whisper of X wobble.
 // ---------------------------------------------------------------------------
 
-// Centerline base radius (Y axis). Elongation stretches X so the loop
-// reads as a long horizontal oval that wraps around the hero text.
 const R = 1.6;
-const ELONG = 2.05;      // major-axis multiplier along X
-const W = 0.42;          // ribbon half-width
-const U_SEGMENTS = 320;  // resolution along the loop
-const V_SEGMENTS = 14;   // resolution across the ribbon
+const ELONG = 2.05;
+const W = 0.42;
+const U_SEGMENTS = 320;
+const V_SEGMENTS = 40;
 const TWO_PI = Math.PI * 2;
 
-// Cursor state for a whisper of parallax.
 const mouseTarget = { x: 0, y: 0 };
 
 /**
- * Build a Möbius strip as an indexed BufferGeometry.
+ * Build a Möbius strip as an indexed BufferGeometry with a smooth vertex-
+ * color gradient across u (loop progress).
  *
- * Parametric surface:
- *   x = (R + v·cos(u/2)) · cos(u) · elong
- *   y = (R + v·cos(u/2)) · sin(u)
- *   z =  v · sin(u/2)
- * with u ∈ [0, 2π), v ∈ [-W, W].
- *
- * The last column (u = 2π) is intentionally NOT duplicated; instead the
- * seam is stitched with triangles that connect column (uSegs-1) → column 0
- * with v flipped (j ↔ vSegs-j). This produces the characteristic Möbius
- * half-twist closure and computeVertexNormals yields continuous shading
- * across the join.
+ * The last column (u = 2π) is intentionally NOT duplicated; the seam is
+ * stitched with triangles connecting column (uSegs-1) → column 0 with v
+ * flipped (j ↔ vSegs-j). This produces the characteristic Möbius half-
+ * twist closure and computeVertexNormals yields continuous shading across
+ * the join.
  */
 function buildMobiusGeometry(
   uSegs: number,
@@ -46,13 +38,18 @@ function buildMobiusGeometry(
   radius: number,
   halfWidth: number,
   elongation: number,
+  colorA: THREE.Color,
+  colorB: THREE.Color,
 ): THREE.BufferGeometry {
-  const uRes = uSegs;         // no duplicated seam column
-  const vRes = vSegs + 1;     // include both v edges
+  const uRes = uSegs;
+  const vRes = vSegs + 1;
   const vertCount = uRes * vRes;
 
   const positions = new Float32Array(vertCount * 3);
   const uvs = new Float32Array(vertCount * 2);
+  const colors = new Float32Array(vertCount * 3);
+
+  const tmp = new THREE.Color();
 
   for (let j = 0; j < vRes; j++) {
     const v = -halfWidth + (2 * halfWidth * j) / vSegs;
@@ -71,6 +68,13 @@ function buildMobiusGeometry(
 
       uvs[idx * 2 + 0] = i / uSegs;
       uvs[idx * 2 + 1] = j / vSegs;
+
+      // Smooth cyclic gradient across the loop: 0→1→0 so the seam matches.
+      const t = 0.5 - 0.5 * Math.cos((TWO_PI * i) / uSegs);
+      tmp.copy(colorA).lerp(colorB, t);
+      colors[idx * 3 + 0] = tmp.r;
+      colors[idx * 3 + 1] = tmp.g;
+      colors[idx * 3 + 2] = tmp.b;
     }
   }
 
@@ -78,7 +82,6 @@ function buildMobiusGeometry(
   for (let j = 0; j < vSegs; j++) {
     for (let i = 0; i < uRes; i++) {
       const iNext = (i + 1) % uRes;
-      // Möbius seam: when wrapping i = uRes-1 → 0, flip v.
       const seam = i === uRes - 1;
       const jTop = j;
       const jBot = j + 1;
@@ -90,7 +93,6 @@ function buildMobiusGeometry(
       const c = jTopNext * uRes + iNext;
       const d = jBotNext * uRes + iNext;
 
-      // Two triangles per quad, wound so normals face outward.
       indices.push(a, c, d, a, d, b);
     }
   }
@@ -99,44 +101,65 @@ function buildMobiusGeometry(
   geom.setIndex(indices);
   geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geom.computeVertexNormals();
   geom.computeBoundingSphere();
   return geom;
 }
 
+type MobiusMeshProps = {
+  quality: QualitySettings;
+  primaryColor: string;
+  secondaryColor: string;
+  rotationSpeed: number; // revolutions per second
+  mouseTilt: boolean;
+};
+
 const MobiusMesh = ({
   quality,
-}: {
-  quality: QualitySettings;
-}) => {
+  primaryColor,
+  secondaryColor,
+  rotationSpeed,
+  mouseTilt,
+}: MobiusMeshProps) => {
   const outerRef = useRef<THREE.Group>(null);
   const rotorRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const scaleRef = useRef(0.75);
 
-  // Adaptive tesselation — high quality on desktop, lighter on low-end.
   const [uSegs, vSegs] = useMemo(() => {
     if (quality.tier === 'high') return [U_SEGMENTS, V_SEGMENTS];
-    if (quality.tier === 'mid') return [220, 10];
-    return [160, 8];
+    if (quality.tier === 'mid') return [220, 24];
+    return [160, 16];
   }, [quality.tier]);
 
   const geometry = useMemo(
-    () => buildMobiusGeometry(uSegs, vSegs, R, W, ELONG),
-    [uSegs, vSegs],
+    () =>
+      buildMobiusGeometry(
+        uSegs,
+        vSegs,
+        R,
+        W,
+        ELONG,
+        new THREE.Color(primaryColor),
+        new THREE.Color(secondaryColor),
+      ),
+    [uSegs, vSegs, primaryColor, secondaryColor],
   );
 
-  // Matte graphite/charcoal — dielectric (metalness = 0), soft roughness so
-  // the directional light reads as a gentle sheen across the twist, never
-  // as chrome or plastic.
+  // Glossy dielectric-leaning PBR: enough metalness to catch highlights as
+  // the ribbon rolls through the light, low roughness for a polished sheen.
   const material = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#20232a'),
-        roughness: 0.72,
-        metalness: 0.0,
+      new THREE.MeshPhysicalMaterial({
+        vertexColors: true,
+        roughness: 0.25,
+        metalness: 0.7,
+        clearcoat: 0.5,
+        clearcoatRoughness: 0.3,
         side: THREE.DoubleSide,
         flatShading: false,
+        envMapIntensity: 0.9,
       }),
     [],
   );
@@ -151,28 +174,25 @@ const MobiusMesh = ({
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
 
-    // Entrance scale-in (once, then holds at 1).
     if (outerRef.current) {
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 2);
       outerRef.current.scale.setScalar(scaleRef.current);
 
-      // Fixed presentation tilt: ~30° back on X, subtle whisper of parallax
-      // from the pointer. No easing / bounce — just a slow lerp toward the
-      // resting pose so it settles smoothly on load.
-      const baseX = -0.52; // ~ -29.8°
-      const baseY = 0.14;  // ~ +8°
-      const targetX = baseX + mouseTarget.y * 0.05;
-      const targetY = baseY + mouseTarget.x * 0.06;
+      // Fixed presentation tilt (~30° back on X) + gentle X wobble +
+      // optional cursor parallax.
+      const baseX = -0.52;
+      const baseY = 0.14;
+      const wobble = Math.sin(t * 0.35) * 0.05;
+      const mx = mouseTilt ? mouseTarget.y * 0.05 : 0;
+      const my = mouseTilt ? mouseTarget.x * 0.06 : 0;
+      const targetX = baseX + wobble + mx;
+      const targetY = baseY + my;
       outerRef.current.rotation.x += (targetX - outerRef.current.rotation.x) * 0.04;
       outerRef.current.rotation.y += (targetY - outerRef.current.rotation.y) * 0.04;
     }
 
-    // Constant-velocity rotation around the strip's local Y axis — one full
-    // revolution every 30s. This carries the twist smoothly through the
-    // light so the ribbon's surface orientation continuously changes.
     if (rotorRef.current) {
-      const period = 30; // seconds per revolution
-      rotorRef.current.rotation.y = (t * TWO_PI) / period;
+      rotorRef.current.rotation.y = t * TWO_PI * rotationSpeed;
     }
   });
 
@@ -186,7 +206,7 @@ const MobiusMesh = ({
 };
 
 // ---------------------------------------------------------------------------
-// Starfield — preserved exactly as before (panning background layer).
+// Starfield — preserved (panning background layer).
 // ---------------------------------------------------------------------------
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -242,53 +262,73 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
+type SceneProps = {
+  quality: QualitySettings & { report: (dt: number) => void };
+  primaryColor: string;
+  secondaryColor: string;
+  rotationSpeed: number;
+  mouseTilt: boolean;
+  cameraDrift: boolean;
+};
+
 const Scene = ({
   quality,
-}: {
-  quality: QualitySettings & { report: (dt: number) => void };
-}) => {
+  primaryColor,
+  secondaryColor,
+  rotationSpeed,
+  mouseTilt,
+  cameraDrift,
+}: SceneProps) => {
   const { camera, size } = useThree();
+  const baseZRef = useRef(8);
 
-  // Fit-to-view: the elongated Möbius has extents ≈ (R+W)·ELONG on X and
-  // (R+W) on Y. Target ~75% of viewport width so the loop wraps around the
-  // hero text with room to spare in the centre.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 1.35; // 1/0.75 padding
+    const halfWidth = (R + W) * ELONG * 1.35;
     const halfHeight = (R + W) * 1.55;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
+    baseZRef.current = z;
     camera.position.set(0, 0.3, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
 
+  useFrame((state) => {
+    if (!cameraDrift) return;
+    const t = state.clock.elapsedTime;
+    // Very subtle parallax drift — feels alive without being distracting.
+    camera.position.x = Math.sin(t * 0.15) * 0.12;
+    camera.position.y = 0.3 + Math.cos(t * 0.12) * 0.08;
+    camera.position.z = baseZRef.current + Math.sin(t * 0.1) * 0.1;
+    camera.lookAt(0, 0, 0);
+  });
+
   return (
     <>
-      {/* Realistic ambient lighting — soft global fill + one directional
-          key that reveals the twist as it rolls through the light. */}
-      <ambientLight intensity={0.55} color="#c8d3e0" />
-      <hemisphereLight intensity={0.35} color="#e2e8f2" groundColor="#0a0d14" />
-      <directionalLight
-        position={[6, 8, 5]}
-        intensity={2.1}
-        color="#fdf7e8"
-        castShadow={false}
-      />
-      {/* Cool counter-fill from the opposite side so the far edge of the
-          ribbon reads instead of falling into pure black. */}
-      <directionalLight
-        position={[-5, -2, 4]}
-        intensity={0.55}
-        color="#93a3b8"
-        castShadow={false}
-      />
+      <ambientLight intensity={0.35} color="#c8d3e0" />
+      <hemisphereLight intensity={0.25} color="#e2e8f2" groundColor="#0a0d14" />
+
+      {/* Key light — warm, travels highlights across the ribbon. */}
+      <directionalLight position={[6, 8, 5]} intensity={1.6} color="#fdf7e8" />
+      {/* Cool fill from opposite side. */}
+      <directionalLight position={[-5, -2, 4]} intensity={0.5} color="#93a3b8" />
+      {/* Rim light from behind to separate the strip from the background. */}
+      <directionalLight position={[0, 2, -6]} intensity={1.2} color="#a78bfa" />
+
+      <Environment preset="studio" />
 
       {quality.enableStarfield && <WideStarfield />}
-      <MobiusMesh quality={quality} />
+      <MobiusMesh
+        quality={quality}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+        rotationSpeed={rotationSpeed}
+        mouseTilt={mouseTilt}
+      />
       <FpsReporter report={quality.report} />
     </>
   );
@@ -303,7 +343,26 @@ const LoadingIndicator = () => (
   </Html>
 );
 
-export const MobiusStrip = () => {
+export type MobiusStripProps = {
+  /** Gradient start color. Default: brand blue. */
+  primaryColor?: string;
+  /** Gradient end color. Default: brand purple. */
+  secondaryColor?: string;
+  /** Full revolutions around Y axis per second. Default: 1/18 (~18s per turn). */
+  rotationSpeed?: number;
+  /** Whether the strip tilts subtly toward the cursor. Default: true. */
+  mouseTilt?: boolean;
+  /** Whether the camera drifts gently for parallax. Default: true. */
+  cameraDrift?: boolean;
+};
+
+export const MobiusStrip = ({
+  primaryColor = '#3b82f6',
+  secondaryColor = '#a855f7',
+  rotationSpeed = 1 / 18,
+  mouseTilt = true,
+  cameraDrift = true,
+}: MobiusStripProps = {}) => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
@@ -355,7 +414,12 @@ export const MobiusStrip = () => {
 
   if (!hasWebGL) {
     return (
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-40 pointer-events-none z-0 blur-3xl"
+        style={{
+          background: `radial-gradient(ellipse at center, ${primaryColor} 0%, ${secondaryColor} 55%, transparent 75%)`,
+        }}
+      />
     );
   }
 
@@ -385,7 +449,14 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} />
+            <Scene
+              quality={quality}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
+              rotationSpeed={rotationSpeed}
+              mouseTilt={mouseTilt}
+              cameraDrift={cameraDrift}
+            />
           </Suspense>
         </Canvas>
       )}
