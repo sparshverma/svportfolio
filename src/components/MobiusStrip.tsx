@@ -65,10 +65,12 @@ function buildInstanceData(segments: number) {
   const tmpColor = new THREE.Color();
   const rng = mulberry32(0x51ad);
 
-  // Approximate arc length: 2πR — tile length picked so plates pack tightly
+  // Approximate arc length: 2πR — tile length picked so plates pack tightly.
+  // Sleek shingles: thinner (Z), wider across the ribbon (Y), shorter along
+  // the travel direction (X) so the loop reads as a continuous scaled track.
   const circumference = 2 * Math.PI * R;
-  const plateLen = (circumference / segments) * 0.94;
-  const plateWid = W * 0.9;
+  const plateLen = (circumference / segments) * 0.82;
+  const plateWid = W * 1.02;
 
   for (let r = 0; r < rows; r++) {
     const wCenter = (r === 0 ? -0.5 : 0.5) * W;
@@ -76,12 +78,12 @@ function buildInstanceData(segments: number) {
       const idx = r * segments + i;
       baseTheta[idx] = (i / segments) * Math.PI * 2;
       wOffset[idx] = wCenter;
-      spin[idx] = (rng() - 0.5) * 0.04;
+      spin[idx] = (rng() - 0.5) * 0.03;
 
-      const jx = 0.92 + rng() * 0.14;
+      const jx = 0.94 + rng() * 0.1;
       scaleX[idx] = plateLen * jx;
-      scaleY[idx] = plateWid * (0.88 + rng() * 0.16);
-      scaleZ[idx] = 0.038 + rng() * 0.022;
+      scaleY[idx] = plateWid * (0.9 + rng() * 0.12);
+      scaleZ[idx] = 0.018 + rng() * 0.012;
 
       // Distribute colors: mostly slate-teal + charcoal, sparse bronze/gold
       const roll = rng();
