@@ -271,21 +271,24 @@ const Scene = ({
       </Environment>
 
       {/* Moody ambient — deep shadows preserved */}
-      <ambientLight intensity={0.18} color="#2a1e12" />
+      <ambientLight intensity={0.55} color="#3a2d1e" />
 
       {/* Directional key light for crisp specular edges */}
       <directionalLight
         position={[5, 6, 4]}
-        intensity={1.4}
+        intensity={3.2}
         color="#F3D46C"
       />
 
       {/* Cool rim from behind */}
       <directionalLight
         position={[-4, -2, -4]}
-        intensity={0.6}
-        color="#325755"
+        intensity={1.6}
+        color="#5a8a86"
       />
+
+      {/* Warm fill from below-front */}
+      <pointLight position={[0, -1, 4]} intensity={1.2} color="#F3D46C" distance={10} decay={1.5} />
 
       <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
       <FpsReporter report={quality.report} />
