@@ -440,7 +440,7 @@ export const MobiusStrip = ({
   return (
     <div
       ref={wrapRef}
-      className="absolute inset-0 pointer-events-none z-0"
+      className={containerClassName}
       aria-hidden="true"
     >
       {shouldRender && (
