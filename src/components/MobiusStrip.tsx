@@ -17,7 +17,7 @@ const DEEP_TEAL = new THREE.Color('#1a2c2b');
 
 // Möbius parameters — R = major radius of loop, W = half band-width
 const R = 1.55;
-const W = 0.42;
+const W = 0.62;
 
 /**
  * Parametric Möbius strip centerline:
@@ -69,8 +69,8 @@ function buildInstanceData(segments: number) {
   // Sleek shingles: thinner (Z), wider across the ribbon (Y), shorter along
   // the travel direction (X) so the loop reads as a continuous scaled track.
   const circumference = 2 * Math.PI * R;
-  const plateLen = (circumference / segments) * 0.82;
-  const plateWid = W * 1.02;
+  const plateLen = (circumference / segments) * 0.98;
+  const plateWid = W * 0.98;
 
   for (let r = 0; r < rows; r++) {
     const wCenter = (r === 0 ? -0.5 : 0.5) * W;
@@ -78,12 +78,12 @@ function buildInstanceData(segments: number) {
       const idx = r * segments + i;
       baseTheta[idx] = (i / segments) * Math.PI * 2;
       wOffset[idx] = wCenter;
-      spin[idx] = (rng() - 0.5) * 0.03;
+      spin[idx] = (rng() - 0.5) * 0.02;
 
-      const jx = 0.94 + rng() * 0.1;
+      const jx = 0.97 + rng() * 0.06;
       scaleX[idx] = plateLen * jx;
-      scaleY[idx] = plateWid * (0.9 + rng() * 0.12);
-      scaleZ[idx] = 0.018 + rng() * 0.012;
+      scaleY[idx] = plateWid * (0.94 + rng() * 0.08);
+      scaleZ[idx] = 0.055 + rng() * 0.02;
 
       // Distribute colors: mostly slate-teal + charcoal, sparse bronze/gold
       const roll = rng();
@@ -120,9 +120,9 @@ const MobiusMesh = ({
   const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const material = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
-      metalness: 0.72,
-      roughness: 0.48,
-      envMapIntensity: 1.8,
+      metalness: 0.9,
+      roughness: 0.62,
+      envMapIntensity: 2.1,
       vertexColors: true,
     });
 
@@ -224,19 +224,26 @@ const MobiusMesh = ({
       // Progress wraps seamlessly via modulo — infinite loop.
       const theta = (data.baseTheta[i] + flow) % TWO_PI;
       const w = data.wOffset[i];
+      const halfT = theta * 0.5;
+      const cT = Math.cos(theta);
+      const sT = Math.sin(theta);
+      const cH = Math.cos(halfT);
+      const sH = Math.sin(halfT);
 
-      // Frenet-like basis from the Möbius parametrization itself.
-      // The parametrization's own cos(θ/2)/sin(θ/2) cross-section provides
-      // the intrinsic 180° twist per full revolution — plates cleanly
-      // transition inside↔outside as θ crosses 2π (two circuits home).
-      mobiusAt(theta, w, p);
-      mobiusAt(theta + eps, w, pNext);
-      mobiusAt(theta, w + eps, pWide);
-
-      tangent.subVectors(pNext, p).normalize();
-      bitangent.subVectors(pWide, p).normalize();
+      // Circular centerline (radius R) in the XY plane.
+      // Tangent runs along the direction of travel.
+      tangent.set(-sT, cT, 0);
+      // Radial outward direction in the ring's plane.
+      const radX = cT, radY = sT;
+      // Frame's "bitangent" (across-strip) starts as radial-outward and
+      // rotates around the tangent by θ/2 → after one lap (θ = 2π) the
+      // bitangent has flipped exactly 180°: the defining Möbius half-twist.
+      bitangent.set(radX * cH, radY * cH, sH);
       normal.crossVectors(tangent, bitangent).normalize();
-      bitangent.crossVectors(normal, tangent).normalize();
+
+      // Position: base ring point + across-strip offset along the twisted
+      // bitangent. This carries the plate rails through the twist.
+      p.set(R * cT + bitangent.x * w, R * sT + bitangent.y * w, bitangent.z * w);
 
       m.makeBasis(tangent, bitangent, normal);
       q.setFromRotationMatrix(m);
