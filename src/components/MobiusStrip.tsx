@@ -116,16 +116,40 @@ const MobiusMesh = ({
   const { count, colors } = data;
 
   const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
-  const material = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        metalness: 0.85,
-        roughness: 0.35,
-        envMapIntensity: 1.35,
-        vertexColors: true,
-      }),
-    [],
-  );
+  const material = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({
+      metalness: 0.72,
+      roughness: 0.48,
+      envMapIntensity: 1.8,
+      vertexColors: true,
+    });
+
+    // View-angle-driven metalness/roughness. Fresnel term (1 - N·V) pushes
+    // metalness up and roughness down at grazing angles so plate edges
+    // catch crisp specular highlights, while face-on pixels stay deep and
+    // matte for moody contrast behind the hero text.
+    mat.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <roughnessmap_fragment>',
+        `#include <roughnessmap_fragment>
+         {
+           float _ndv = clamp(dot(normalize(vNormal), normalize(vViewPosition)), 0.0, 1.0);
+           float _fres = pow(1.0 - _ndv, 3.0);
+           roughnessFactor = mix(roughnessFactor, 0.12, _fres * 0.85);
+         }`,
+      );
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <metalnessmap_fragment>',
+        `#include <metalnessmap_fragment>
+         {
+           float _ndv2 = clamp(dot(normalize(vNormal), normalize(vViewPosition)), 0.0, 1.0);
+           float _fres2 = pow(1.0 - _ndv2, 3.0);
+           metalnessFactor = mix(metalnessFactor, 1.0, _fres2 * 0.9);
+         }`,
+      );
+    };
+    return mat;
+  }, []);
 
   // Per-instance colors
   useEffect(() => {
