@@ -69,8 +69,8 @@ function buildInstanceData(segments: number) {
   // Sleek shingles: thinner (Z), wider across the ribbon (Y), shorter along
   // the travel direction (X) so the loop reads as a continuous scaled track.
   const circumference = 2 * Math.PI * R;
-  const plateLen = (circumference / segments) * 0.82;
-  const plateWid = W * 1.02;
+  const plateLen = (circumference / segments) * 0.98;
+  const plateWid = W * 0.98;
 
   for (let r = 0; r < rows; r++) {
     const wCenter = (r === 0 ? -0.5 : 0.5) * W;
@@ -78,12 +78,12 @@ function buildInstanceData(segments: number) {
       const idx = r * segments + i;
       baseTheta[idx] = (i / segments) * Math.PI * 2;
       wOffset[idx] = wCenter;
-      spin[idx] = (rng() - 0.5) * 0.03;
+      spin[idx] = (rng() - 0.5) * 0.02;
 
-      const jx = 0.94 + rng() * 0.1;
+      const jx = 0.97 + rng() * 0.06;
       scaleX[idx] = plateLen * jx;
-      scaleY[idx] = plateWid * (0.9 + rng() * 0.12);
-      scaleZ[idx] = 0.018 + rng() * 0.012;
+      scaleY[idx] = plateWid * (0.94 + rng() * 0.08);
+      scaleZ[idx] = 0.055 + rng() * 0.02;
 
       // Distribute colors: mostly slate-teal + charcoal, sparse bronze/gold
       const roll = rng();
