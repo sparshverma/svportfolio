@@ -349,23 +349,32 @@ const Scene = ({
         />
       </Environment>
 
-      <ambientLight intensity={0.55} color="#3a4a4a" />
+      <ambientLight intensity={0.4} color="#3a4a4a" />
 
-      {/* Sharp off-center key — crisp specular on plate edges */}
+      {/* Sharp oblique key — intense gold highlights on plate edges */}
       <directionalLight
-        position={[5, 6, 4]}
-        intensity={4.2}
+        position={[7, 5, 5]}
+        intensity={5.5}
         color="#F3D46C"
+        castShadow={false}
+      />
+
+      {/* Edge-grazing fill — crisp specular on the opposite rim */}
+      <directionalLight
+        position={[-3, 2, 6]}
+        intensity={2.4}
+        color="#F3ECDD"
+        castShadow={false}
       />
 
       {/* Cool rim from behind for silhouette */}
       <directionalLight
         position={[-4, -2, -4]}
-        intensity={2}
+        intensity={1.6}
         color="#7ab0aa"
       />
 
-      <pointLight position={[0, -1, 4]} intensity={1.4} color="#F3D46C" distance={10} decay={1.5} />
+      <pointLight position={[0, -1, 4]} intensity={1.2} color="#F3D46C" distance={10} decay={1.5} />
 
       {quality.enableStarfield && <WideStarfield />}
       <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
