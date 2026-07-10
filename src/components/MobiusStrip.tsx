@@ -27,13 +27,12 @@ const GOLD = new THREE.Color('#F3D46C');
 const mouseTarget = { x: 0, y: 0 };
 
 const MobiusMesh = ({
-  enableCursorTilt,
   finalScale = 1,
   phase = 0,
   offsetX = 0,
   perpendicular = false,
 }: {
-  enableCursorTilt: boolean;
+  enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
   offsetX?: number;
