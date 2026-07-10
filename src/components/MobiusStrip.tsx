@@ -447,38 +447,33 @@ export const MobiusStrip = () => {
   return (
     <div
       ref={wrapRef}
-      className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+      className="absolute inset-0 pointer-events-none z-0"
       aria-hidden="true"
     >
-      <div
-        className="aspect-square"
-        style={{ width: 'min(85vw, 70vh, 560px)', height: 'min(85vw, 70vh, 560px)' }}
-      >
-        {shouldRender && (
-          <Canvas
-            dpr={quality.dpr}
-            frameloop={visible ? 'always' : 'never'}
-            camera={{ position: [0, 0.4, 3.6], fov: 45 }}
-            gl={{
-              antialias: true,
-              alpha: true,
-              powerPreference: 'high-performance',
-              toneMapping: THREE.ACESFilmicToneMapping,
-            }}
-            onCreated={({ gl }) => {
-              gl.toneMappingExposure = 1.05;
-              gl.domElement.addEventListener('webglcontextlost', (e) => {
-                e.preventDefault();
-                setHasWebGL(false);
-              });
-            }}
-          >
-            <Suspense fallback={<LoadingIndicator />}>
-              <Scene quality={quality} />
-            </Suspense>
-          </Canvas>
-        )}
-      </div>
+      {shouldRender && (
+        <Canvas
+          dpr={quality.dpr}
+          frameloop={visible ? 'always' : 'never'}
+          camera={{ position: [0, 0.2, 4], fov: 45 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+            toneMapping: THREE.ACESFilmicToneMapping,
+          }}
+          onCreated={({ gl }) => {
+            gl.toneMappingExposure = 1.05;
+            gl.domElement.addEventListener('webglcontextlost', (e) => {
+              e.preventDefault();
+              setHasWebGL(false);
+            });
+          }}
+        >
+          <Suspense fallback={<LoadingIndicator />}>
+            <Scene quality={quality} />
+          </Suspense>
+        </Canvas>
+      )}
     </div>
   );
 };
