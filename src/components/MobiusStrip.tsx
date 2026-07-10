@@ -180,13 +180,21 @@ const MobiusMesh = ({
     mesh.instanceMatrix.needsUpdate = true;
   });
 
+  // Nested groups: outer positions this link in the chain and applies the
+  // perpendicular alternation (so adjacent rings interlock); inner is the
+  // scaling/tilting group that animates on mount.
   return (
-    <group ref={groupRef}>
-      <instancedMesh
-        ref={meshRef}
-        args={[geometry, material, PLATE_COUNT]}
-        frustumCulled={false}
-      />
+    <group
+      position={[offsetX, 0, 0]}
+      rotation={perpendicular ? [Math.PI / 2, 0, 0] : [0, 0, 0]}
+    >
+      <group ref={groupRef}>
+        <instancedMesh
+          ref={meshRef}
+          args={[geometry, material, PLATE_COUNT]}
+          frustumCulled={false}
+        />
+      </group>
     </group>
   );
 };
