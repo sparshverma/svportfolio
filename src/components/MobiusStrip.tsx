@@ -364,6 +364,8 @@ export type MobiusStripProps = {
   mouseTilt?: boolean;
   /** Whether the camera drifts gently for parallax. Default: true. */
   cameraDrift?: boolean;
+  /** Positioning wrapper class. Defaults to a full-bleed background layer. */
+  containerClassName?: string;
 };
 
 export const MobiusStrip = ({
@@ -373,6 +375,7 @@ export const MobiusStrip = ({
   rotationSpeed = 1 / 18,
   mouseTilt = true,
   cameraDrift = true,
+  containerClassName = 'absolute inset-0 pointer-events-none z-0',
 }: MobiusStripProps = {}) => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
