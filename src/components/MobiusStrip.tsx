@@ -156,13 +156,12 @@ const MobiusMesh = ({
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Entrance scale-in on the group + slow axial twist rotation
+    // Entrance scale-in on the group. NO rigid Y-axis spin — the ring stays
+    // fixed in space; motion comes entirely from tiles crawling along the
+    // Möbius path below ("treadmill" / conveyor belt effect).
     if (groupRef.current) {
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
-
-      // Slow axial "twist" — rotate the whole ring around its Y axis
-      groupRef.current.rotation.y += delta * 0.08;
 
       // Static forward tilt so ring reads as 3D — cursor nudges it
       const baseTiltX = -0.32;
@@ -176,8 +175,14 @@ const MobiusMesh = ({
       }
     }
 
-    // Möbius "inside-out" flow — slower now that we also have axial twist
-    const uOffset = t * 0.18;
+    // Möbius conveyor: each tile advances its `u` parameter continuously.
+    // The Möbius parametrization (cos(u/2), sin(u/2) in the cross-section)
+    // supplies the intrinsic half-twist so tiles seamlessly transition
+    // between inner and outer surfaces over each full 2π loop, returning
+    // to the exact starting configuration after two circuits — an unbroken
+    // perfectly-looping cycle.
+    const uOffset = t * 0.22;
+
     const { p, pu, pv, tangent, bitangent, normal, m, q, spinQ, scale } = scratch;
     const eps = 0.003;
     const TWO_PI = Math.PI * 2;
