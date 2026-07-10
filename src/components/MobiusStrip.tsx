@@ -116,23 +116,17 @@ const MobiusMesh = ({
     if (groupRef.current) {
       scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
-      // All strips share the origin — entanglement comes from per-strip
-      // Euler offsets that weave their rings through one another.
-      groupRef.current.position.set(0, 0, 0);
 
-      const baseX = -Math.PI / 3 + extraRotX;         // -60° + per-strip tilt
-      const baseY = (20 * Math.PI) / 180 + extraRotY; // +20° + per-strip yaw
-      const baseZ = extraRotZ;
+      const baseX = -Math.PI / 3;         // -60° tilt back (shared)
+      const baseY = (20 * Math.PI) / 180; // +20° yaw    (shared)
       if (enableCursorTilt) {
         const targetX = baseX + mouseTarget.y * 0.08;
         const targetY = baseY + mouseTarget.x * 0.1;
         groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
         groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.05;
-        groupRef.current.rotation.z += (baseZ - groupRef.current.rotation.z) * 0.05;
       } else {
         groupRef.current.rotation.x += (baseX - groupRef.current.rotation.x) * 0.05;
         groupRef.current.rotation.y += (baseY - groupRef.current.rotation.y) * 0.05;
-        groupRef.current.rotation.z += (baseZ - groupRef.current.rotation.z) * 0.05;
       }
     }
 
