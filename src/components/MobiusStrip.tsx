@@ -30,16 +30,15 @@ const MobiusMesh = ({
   enableCursorTilt,
   finalScale = 1,
   phase = 0,
-  extraRotX = 0,
-  extraRotY = 0,
-  extraRotZ = 0,
+  offsetX = 0,
+  perpendicular = false,
 }: {
   enableCursorTilt: boolean;
   finalScale?: number;
   phase?: number;
-  extraRotX?: number;
-  extraRotY?: number;
-  extraRotZ?: number;
+  offsetX?: number;
+  /** Rotate this ring 90° around the chain axis so it interlocks with neighbours. */
+  perpendicular?: boolean;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
