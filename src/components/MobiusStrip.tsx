@@ -233,11 +233,24 @@ const Scene = ({
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
 }) => {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+
+  // Fit-to-view: Möbius bounding radius ≈ R + HALF_W = 1.77. Compute the
+  // camera Z that fits that radius vertically (or horizontally on portrait)
+  // with a comfortable margin, using the current FOV.
   useEffect(() => {
-    camera.position.set(0, 0.4, 3.6);
+    const persp = camera as THREE.PerspectiveCamera;
+    const boundingR = R + HALF_W + 0.25; // margin
+    const aspect = size.width / Math.max(1, size.height);
+    const fovRad = (persp.fov * Math.PI) / 180;
+    // Vertical half-height at z: z * tan(fov/2). Horizontal: z * tan(fov/2)*aspect.
+    const zForHeight = boundingR / Math.tan(fovRad / 2);
+    const zForWidth = boundingR / (Math.tan(fovRad / 2) * aspect);
+    const z = Math.max(zForHeight, zForWidth);
+    camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
-  }, [camera]);
+    persp.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
 
   // Segments scale with tier: high=140, mid=100, low=64 (× 2 rows)
   const segments =
@@ -387,7 +400,10 @@ export const MobiusStrip = () => {
       className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
       aria-hidden="true"
     >
-      <div className="w-full h-full max-w-[520px] max-h-[520px] aspect-square">
+      <div
+        className="aspect-square"
+        style={{ width: 'min(85vw, 70vh, 560px)', height: 'min(85vw, 70vh, 560px)' }}
+      >
         {shouldRender && (
           <Canvas
             dpr={quality.dpr}
