@@ -115,6 +115,7 @@ type MobiusMeshProps = {
   quality: QualitySettings;
   primaryColor: string;
   secondaryColor: string;
+  midColor: string;
   rotationSpeed: number; // revolutions per second
   mouseTilt: boolean;
 };
@@ -123,6 +124,7 @@ const MobiusMesh = ({
   quality,
   primaryColor,
   secondaryColor,
+  midColor,
   rotationSpeed,
   mouseTilt,
 }: MobiusMeshProps) => {
@@ -133,8 +135,8 @@ const MobiusMesh = ({
 
   const [uSegs, vSegs] = useMemo(() => {
     if (quality.tier === 'high') return [U_SEGMENTS, V_SEGMENTS];
-    if (quality.tier === 'mid') return [220, 24];
-    return [160, 16];
+    if (quality.tier === 'mid') return [280, 28];
+    return [200, 18];
   }, [quality.tier]);
 
   const geometry = useMemo(
@@ -147,9 +149,11 @@ const MobiusMesh = ({
         ELONG,
         new THREE.Color(primaryColor),
         new THREE.Color(secondaryColor),
+        new THREE.Color(midColor),
       ),
-    [uSegs, vSegs, primaryColor, secondaryColor],
+    [uSegs, vSegs, primaryColor, secondaryColor, midColor],
   );
+
 
   // Glossy dielectric-leaning PBR: enough metalness to catch highlights as
   // the ribbon rolls through the light, low roughness for a polished sheen.
