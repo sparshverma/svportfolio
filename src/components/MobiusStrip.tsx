@@ -111,8 +111,9 @@ const MobiusMesh = ({
     // Entrance scale-in + fixed 3D presentation tilt.
     // Group tilt: X = -60° (tip back), Y = +20° (yaw).
     if (groupRef.current) {
-      scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
+      scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
+      groupRef.current.position.x = offsetX;
 
       const baseX = -Math.PI / 3;         // -60°
       const baseY = (20 * Math.PI) / 180; // +20°
