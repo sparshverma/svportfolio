@@ -136,7 +136,7 @@ const MobiusMesh = ({
 
     for (let i = 0; i < PLATE_COUNT; i++) {
       // Per-plate angle around the loop, advancing continuously.
-      const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2;
+      const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2 + phase;
       const cT = Math.cos(theta);
       const sT = Math.sin(theta);
 
