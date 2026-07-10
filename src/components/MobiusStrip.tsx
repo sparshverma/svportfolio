@@ -357,6 +357,8 @@ export type MobiusStripProps = {
   primaryColor?: string;
   /** Gradient end color. Default: brand purple. */
   secondaryColor?: string;
+  /** Gradient mid-stop color (the highlight the twist passes through). Default: soft white. */
+  midColor?: string;
   /** Full revolutions around Y axis per second. Default: 1/18 (~18s per turn). */
   rotationSpeed?: number;
   /** Whether the strip tilts subtly toward the cursor. Default: true. */
@@ -368,6 +370,7 @@ export type MobiusStripProps = {
 export const MobiusStrip = ({
   primaryColor = '#3b82f6',
   secondaryColor = '#a855f7',
+  midColor = '#f1f5ff',
   rotationSpeed = 1 / 18,
   mouseTilt = true,
   cameraDrift = true,
