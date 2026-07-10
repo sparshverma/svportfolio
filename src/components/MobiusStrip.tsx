@@ -255,19 +255,32 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Fit-to-view so the ribbon stays framed on portrait mobile and wide desktop.
+  // Four Möbius strips laid out side-by-side.
+  const STRIP_SCALE = 0.55;
+  const STRIP_SPACING = 3.2;
+  const strips = useMemo(
+    () => [-1.5, -0.5, 0.5, 1.5].map((k, i) => ({
+      offsetX: k * STRIP_SPACING,
+      phase: (i * Math.PI) / 2.7, // desync each so they don't move in lockstep
+    })),
+    [],
+  );
+
+  // Fit-to-view: horizontal extent = outermost offset + strip radius.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const boundingR = R * 1.25;
+    const halfWidth =
+      Math.abs(strips[strips.length - 1].offsetX) + R * STRIP_SCALE * 1.15;
+    const halfHeight = R * STRIP_SCALE * 1.3;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    const zForHeight = boundingR / Math.tan(fovRad / 2);
-    const zForWidth = boundingR / (Math.tan(fovRad / 2) * aspect);
+    const zForHeight = halfHeight / Math.tan(fovRad / 2);
+    const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, strips]);
 
   return (
     <>
@@ -285,7 +298,15 @@ const Scene = ({
       />
 
       {quality.enableStarfield && <WideStarfield />}
-      <MobiusMesh enableCursorTilt={quality.enableCursorTilt} />
+      {strips.map((s, i) => (
+        <MobiusMesh
+          key={i}
+          enableCursorTilt={quality.enableCursorTilt}
+          offsetX={s.offsetX}
+          finalScale={STRIP_SCALE}
+          phase={s.phase}
+        />
+      ))}
       <FpsReporter report={quality.report} />
     </>
   );
