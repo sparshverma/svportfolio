@@ -400,7 +400,10 @@ export const MobiusStrip = () => {
       className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
       aria-hidden="true"
     >
-      <div className="w-full h-full max-w-[520px] max-h-[520px] aspect-square">
+      <div
+        className="aspect-square"
+        style={{ width: 'min(85vw, 70vh, 560px)', height: 'min(85vw, 70vh, 560px)' }}
+      >
         {shouldRender && (
           <Canvas
             dpr={quality.dpr}
