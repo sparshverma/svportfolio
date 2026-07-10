@@ -1,162 +1,206 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
+import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
+import { FpsMeter } from '@/lib/perf/fpsMeter';
 
-// Shared mouse state (normalized -1..1). Updated by a window listener so it
-// works even when the canvas container is pointer-events-none.
+// Shared cursor state (normalized -1..1). Updated by a window listener.
 const mouseTarget = { x: 0, y: 0, active: 0 };
 
-const buildMobiusGeometry = () => {
-  const R = 1;         // main radius
-  const w = 0.35;      // half-width of the band
-  const t = 0.06;      // thickness (tube offset)
+// Palette from the Dribbble reference (Igor Backstrom — Möbius strip).
+const COPPER_A = new THREE.Color('#905429');
+const COPPER_B = new THREE.Color('#F3D46C');
+const TEAL_A = new THREE.Color('#325755');
+const TEAL_B = new THREE.Color('#576253');
 
-  // Parametric surface: two "sheets" offset along the surface normal give the
-  // band real thickness so it reads as a solid 3D object from any angle.
-  const surface = (u: number, v: number, target: THREE.Vector3) => {
-    const U = u * Math.PI * 2;
-    // v in [0,1] -> map to [-w, w] for top sheet and back for bottom sheet,
-    // with a thin rim so it forms a closed shell.
-    const s = v < 0.5 ? 1 : -1;
-    const local = (v < 0.5 ? v * 2 : (1 - v) * 2) * 2 - 1; // -1..1..-1
-    const vv = local * w;
+// Möbius parametrization: strip of half-width w, main radius R.
+const R = 1.35;
+const HALF_W = 0.42;
 
-    // Base möbius point
-    const cx = (R + (vv / 2) * Math.cos(U / 2)) * Math.cos(U);
-    const cy = (R + (vv / 2) * Math.cos(U / 2)) * Math.sin(U);
-    const cz = (vv / 2) * Math.sin(U / 2);
+function mobiusPoint(u: number, v: number, out: THREE.Vector3) {
+  const c = Math.cos(u / 2);
+  const s = Math.sin(u / 2);
+  const rr = R + v * c;
+  out.set(rr * Math.cos(u), rr * Math.sin(u), v * s);
+}
 
-    // Approximate surface normal via finite differences
-    const eps = 0.001;
-    const p = new THREE.Vector3(cx, cy, cz);
-    const du = new THREE.Vector3(
-      (R + (vv / 2) * Math.cos((U + eps) / 2)) * Math.cos(U + eps) - cx,
-      (R + (vv / 2) * Math.cos((U + eps) / 2)) * Math.sin(U + eps) - cy,
-      (vv / 2) * Math.sin((U + eps) / 2) - cz,
-    );
-    const dv = new THREE.Vector3(
-      (eps / 2) * Math.cos(U / 2) * Math.cos(U),
-      (eps / 2) * Math.cos(U / 2) * Math.sin(U),
-      (eps / 2) * Math.sin(U / 2),
-    );
-    const n = new THREE.Vector3().crossVectors(du, dv).normalize();
+function buildInstances(count: number) {
+  const positions = new Float32Array(count * 3);
+  const quats = new Float32Array(count * 4);
+  const scales = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
 
-    target.set(p.x + n.x * t * s, p.y + n.y * t * s, p.z + n.z * t * s);
+  const p = new THREE.Vector3();
+  const pu = new THREE.Vector3();
+  const pv = new THREE.Vector3();
+  const tangent = new THREE.Vector3();
+  const bitangent = new THREE.Vector3();
+  const normal = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const tmpColor = new THREE.Color();
+
+  // Two rows of tiles across the band width so the strip reads as a filled ring.
+  const rows = 2;
+  const perRow = Math.max(1, Math.floor(count / rows));
+  const total = perRow * rows;
+
+  const rng = mulberry32(1337);
+
+  for (let r = 0; r < rows; r++) {
+    // v position within the band: two bands centered around ±HALF_W/2
+    const vBase = (r === 0 ? -0.5 : 0.5) * HALF_W;
+    for (let i = 0; i < perRow; i++) {
+      const idx = r * perRow + i;
+      const u = (i / perRow) * Math.PI * 2;
+
+      // Jitter along v and slight radial jitter for scattered edge look
+      const v = vBase + (rng() - 0.5) * HALF_W * 0.35;
+
+      mobiusPoint(u, v, p);
+
+      // Finite-difference frame
+      const eps = 0.003;
+      mobiusPoint(u + eps, v, pu);
+      mobiusPoint(u, v + eps, pv);
+      tangent.subVectors(pu, p).normalize();
+      bitangent.subVectors(pv, p).normalize();
+      normal.crossVectors(tangent, bitangent).normalize();
+      // Re-orthogonalize bitangent so basis is clean
+      bitangent.crossVectors(normal, tangent).normalize();
+
+      // Build rotation matrix from basis: X=tangent, Y=bitangent, Z=normal
+      m.makeBasis(tangent, bitangent, normal);
+      q.setFromRotationMatrix(m);
+
+      // Small random spin around the tile normal for the "scattered shingle" feel
+      const spin = (rng() - 0.5) * 0.18; // ~±5°
+      const spinQ = new THREE.Quaternion().setFromAxisAngle(normal, spin);
+      q.multiply(spinQ);
+
+      positions[idx * 3 + 0] = p.x;
+      positions[idx * 3 + 1] = p.y;
+      positions[idx * 3 + 2] = p.z;
+      quats[idx * 4 + 0] = q.x;
+      quats[idx * 4 + 1] = q.y;
+      quats[idx * 4 + 2] = q.z;
+      quats[idx * 4 + 3] = q.w;
+
+      // Tile size: long along tangent, short across bitangent — thin shingles
+      const sx = 0.11 + rng() * 0.03;
+      const sy = HALF_W * 0.55 + rng() * 0.05;
+      const sz = 1;
+      scales[idx * 3 + 0] = sx;
+      scales[idx * 3 + 1] = sy;
+      scales[idx * 3 + 2] = sz;
+
+      // Face color: front vs back of the twisted band via sign(cos(u/2))
+      // The twist flips sides every full turn — use combined sign of cos(u/2) and row
+      const side = Math.sign(Math.cos(u / 2)) * (r === 0 ? 1 : -1);
+      const warm = side > 0;
+      const a = warm ? COPPER_A : TEAL_A;
+      const b = warm ? COPPER_B : TEAL_B;
+      tmpColor.copy(a).lerp(b, rng());
+      colors[idx * 3 + 0] = tmpColor.r;
+      colors[idx * 3 + 1] = tmpColor.g;
+      colors[idx * 3 + 2] = tmpColor.b;
+    }
+  }
+
+  return { positions, quats, scales, colors, count: total };
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
 
-  const geo = new ParametricGeometry(surface, 220, 40);
-  geo.computeVertexNormals();
-  return geo;
-};
-
-const vertexShader = /* glsl */ `
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vViewDir;
-  varying vec3 vWorldPos;
-  void main() {
-    vUv = uv;
-    vec4 worldPos = modelMatrix * vec4(position, 1.0);
-    vWorldPos = worldPos.xyz;
-    vNormal = normalize(normalMatrix * normal);
-    vec4 mv = viewMatrix * worldPos;
-    vViewDir = normalize(-mv.xyz);
-    gl_Position = projectionMatrix * mv;
-  }
-`;
-
-const fragmentShader = /* glsl */ `
-  precision highp float;
-  uniform float uTime;
-  uniform vec2  uMouse;
-  uniform float uMouseStrength;
-  uniform vec3  uColorA;
-  uniform vec3  uColorB;
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vViewDir;
-  varying vec3 vWorldPos;
-
-  void main() {
-    // Traveling wave along U with a subtle secondary along V
-    float wave = 0.5 + 0.5 * sin(vUv.x * 18.0 - uTime * 1.6);
-    float wave2 = 0.5 + 0.5 * sin(vUv.y * 6.0 + uTime * 0.8);
-    float mixer = clamp(wave * 0.7 + wave2 * 0.3, 0.0, 1.0);
-    vec3 base = mix(uColorA, uColorB, mixer);
-
-    // Fresnel rim
-    float fres = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 2.0);
-
-    // Cursor proximity glow: project mouse (in NDC-ish space) onto world XY
-    vec2 mp = uMouse * 2.0;
-    float d = distance(vWorldPos.xy, mp);
-    float hotspot = smoothstep(1.6, 0.0, d) * uMouseStrength;
-
-    vec3 col = base * (0.55 + 0.35 * wave);
-    col += base * fres * 1.4;
-    col += mix(uColorA, uColorB, 0.5) * hotspot * 1.2;
-
-    // Slight base emissive so it glows in the dark hero
-    col += base * 0.15;
-
-    gl_FragColor = vec4(col, 0.95);
-  }
-`;
-
-const MobiusMesh = ({ reducedMotion }: { reducedMotion: boolean }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.ShaderMaterial>(null);
-  const geometry = useMemo(() => buildMobiusGeometry(), []);
+const TiledMobius = ({
+  tileCount,
+  enableCursorTilt,
+}: {
+  tileCount: number;
+  enableCursorTilt: boolean;
+}) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6);
 
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uMouse: { value: new THREE.Vector2(0, 0) },
-      uMouseStrength: { value: 0 },
-      uColorA: { value: new THREE.Color('#22d3ee') },
-      uColorB: { value: new THREE.Color('#a855f7') },
-    }),
+  const { positions, quats, scales, colors, count } = useMemo(
+    () => buildInstances(tileCount),
+    [tileCount],
+  );
+
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
+  const material = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        metalness: 0.85,
+        roughness: 0.38,
+        side: THREE.DoubleSide,
+        vertexColors: true,
+      }),
     [],
   );
 
-  useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
-    if (matRef.current) {
-      const u = matRef.current.uniforms;
-      u.uTime.value = reducedMotion ? 0 : t;
-      // Smooth mouse follow
-      u.uMouse.value.x += (mouseTarget.x - u.uMouse.value.x) * 0.08;
-      u.uMouse.value.y += (mouseTarget.y - u.uMouse.value.y) * 0.08;
-      u.uMouseStrength.value += (mouseTarget.active - u.uMouseStrength.value) * 0.06;
+  // Apply per-instance matrices + colors once
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const mesh = meshRef.current;
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const colorArr = new THREE.InstancedBufferAttribute(colors, 3);
+    mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+    for (let i = 0; i < count; i++) {
+      p.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+      q.set(quats[i * 4], quats[i * 4 + 1], quats[i * 4 + 2], quats[i * 4 + 3]);
+      s.set(scales[i * 3], scales[i * 3 + 1], scales[i * 3 + 2]);
+      m.compose(p, q, s);
+      mesh.setMatrixAt(i, m);
     }
-    if (meshRef.current) {
-      // Entrance scale-in with overshoot
-      const target = 1;
-      scaleRef.current += (target - scaleRef.current) * Math.min(1, delta * 3);
-      const s = scaleRef.current + Math.sin(Math.min(t, 1.2) * Math.PI) * 0.05;
-      meshRef.current.scale.setScalar(s);
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.geometry.setAttribute('color', colorArr);
+    // Instanced meshes use `instanceColor` for per-instance tint
+    mesh.instanceColor = colorArr;
+  }, [positions, quats, scales, colors, count]);
 
-      // Baseline slow rotation + cursor-driven tilt
-      const tiltX = reducedMotion ? 0 : mouseTarget.y * 0.35;
-      const tiltY = reducedMotion ? 0 : mouseTarget.x * 0.55;
-      meshRef.current.rotation.x += (tiltX + Math.sin(t * 0.15) * 0.1 - meshRef.current.rotation.x) * 0.05;
-      meshRef.current.rotation.y += (reducedMotion ? 0.001 : 0.004) + (tiltY - (meshRef.current.rotation.y % (Math.PI * 2))) * 0.02;
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+
+    // Entrance
+    scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
+    groupRef.current.scale.setScalar(scaleRef.current);
+
+    // Baseline slow rotation
+    groupRef.current.rotation.y += delta * 0.28;
+
+    // Cursor tilt
+    if (enableCursorTilt) {
+      const targetX = mouseTarget.y * 0.18;
+      const targetZ = mouseTarget.x * 0.14;
+      groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
+      groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
     }
   });
 
   return (
-    <mesh ref={meshRef} geometry={geometry}>
-      <shaderMaterial
-        ref={matRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={uniforms}
-        side={THREE.DoubleSide}
-        transparent
+    <group ref={groupRef}>
+      <instancedMesh
+        ref={meshRef}
+        args={[geometry, material, count]}
+        frustumCulled={false}
       />
-    </mesh>
+    </group>
   );
 };
 
@@ -164,36 +208,36 @@ const OrbitingLight = () => {
   const ref = useRef<THREE.PointLight>(null);
   useFrame((state) => {
     if (!ref.current) return;
-    const t = state.clock.elapsedTime * 0.6;
-    ref.current.position.set(Math.cos(t) * 3, Math.sin(t * 0.8) * 2, Math.sin(t) * 3);
+    const t = state.clock.elapsedTime * 0.5;
+    ref.current.position.set(Math.cos(t) * 3.2, Math.sin(t * 0.7) * 1.6, Math.sin(t) * 3.2);
   });
-  return <pointLight ref={ref} intensity={1.2} color="#a855f7" distance={10} />;
+  return <pointLight ref={ref} intensity={0.9} color="#F3D46C" distance={12} />;
 };
 
-const Starfield = () => {
+const Starfield = ({ count = 160 }: { count?: number }) => {
   const positions = useMemo(() => {
-    const arr = new Float32Array(200 * 3);
-    for (let i = 0; i < 200; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 10;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      arr[i * 3 + 2] = -2 - Math.random() * 4;
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 12;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 12;
+      arr[i * 3 + 2] = -3 - Math.random() * 5;
     }
     return arr;
-  }, []);
+  }, [count]);
   const ref = useRef<THREE.Points>(null);
   useFrame((state) => {
-    if (ref.current) ref.current.rotation.z = state.clock.elapsedTime * 0.02;
+    if (ref.current) ref.current.rotation.z = state.clock.elapsedTime * 0.015;
   });
   return (
     <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={positions.length / 3} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={count} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.03}
-        color="#22d3ee"
+        size={0.025}
+        color="#F3ECDD"
         transparent
-        opacity={0.6}
+        opacity={0.25}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
@@ -201,18 +245,35 @@ const Starfield = () => {
   );
 };
 
-const Scene = ({ reducedMotion }: { reducedMotion: boolean }) => {
+const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
+  const meterRef = useRef(new FpsMeter(60));
+  useFrame((_, delta) => {
+    meterRef.current.push(delta);
+    report(delta);
+    // expose for verification
+    (window as unknown as { __mobiusFps?: number }).__mobiusFps = meterRef.current.avg();
+  });
+  return null;
+};
+
+const Scene = ({ quality }: { quality: QualitySettings & { report: (dt: number) => void } }) => {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(0, 0, 4);
+    camera.position.set(0, 0, 4.6);
+    camera.lookAt(0, 0, 0);
   }, [camera]);
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <pointLight position={[5, 5, 5]} intensity={0.8} color="#22d3ee" />
-      <OrbitingLight />
-      <Starfield />
-      <MobiusMesh reducedMotion={reducedMotion} />
+      <color attach="background" args={['#010101']} />
+      <ambientLight intensity={0.18} />
+      {/* Warm key light */}
+      <pointLight position={[3, 2.5, 3.5]} intensity={1.6} color="#F3D46C" distance={14} />
+      {/* Cool rim light */}
+      <pointLight position={[-3.5, -1.5, -2]} intensity={1.1} color="#325755" distance={14} />
+      {quality.enableOrbitLight && <OrbitingLight />}
+      {quality.enableStarfield && <Starfield />}
+      <TiledMobius tileCount={quality.tileCount} enableCursorTilt={quality.enableCursorTilt} />
+      <FpsReporter report={quality.report} />
     </>
   );
 };
@@ -221,29 +282,29 @@ export const MobiusStrip = () => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const quality = useAdaptiveQuality();
 
   useEffect(() => {
     try {
       const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const gl =
+        canvas.getContext('webgl2') ||
+        canvas.getContext('webgl') ||
+        canvas.getContext('experimental-webgl');
       if (!gl) return setHasWebGL(false);
     } catch {
       return setHasWebGL(false);
     }
-
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const onMq = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', onMq);
 
     const onMove = (e: PointerEvent) => {
       mouseTarget.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouseTarget.y = -((e.clientY / window.innerHeight) * 2 - 1);
       mouseTarget.active = 1;
     };
-    const onLeave = () => { mouseTarget.active = 0; };
+    const onLeave = () => {
+      mouseTarget.active = 0;
+    };
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerleave', onLeave);
 
@@ -256,7 +317,6 @@ export const MobiusStrip = () => {
     }
 
     return () => {
-      mq.removeEventListener('change', onMq);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerleave', onLeave);
       if (idleId !== undefined) window.cancelIdleCallback(idleId);
@@ -283,13 +343,13 @@ export const MobiusStrip = () => {
   return (
     <div
       ref={wrapRef}
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] max-w-[95vw] max-h-[95vw] opacity-70 pointer-events-none z-0"
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] max-w-[95vw] max-h-[95vw] opacity-95 pointer-events-none z-0"
     >
       {shouldRender && (
         <Canvas
-          dpr={[1, 1.5]}
+          dpr={quality.dpr}
           frameloop={visible ? 'always' : 'never'}
-          camera={{ position: [0, 0, 4], fov: 50 }}
+          camera={{ position: [0, 0, 4.6], fov: 45 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             gl.domElement.addEventListener('webglcontextlost', (e) => {
@@ -298,7 +358,7 @@ export const MobiusStrip = () => {
             });
           }}
         >
-          <Scene reducedMotion={reducedMotion} />
+          <Scene quality={quality} />
         </Canvas>
       )}
     </div>
