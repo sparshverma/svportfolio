@@ -26,10 +26,20 @@ const GOLD = new THREE.Color('#F3D46C');
 // Cursor state for subtle parallax tilt.
 const mouseTarget = { x: 0, y: 0 };
 
-const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
+const MobiusMesh = ({
+  enableCursorTilt,
+  offsetX = 0,
+  finalScale = 1,
+  phase = 0,
+}: {
+  enableCursorTilt: boolean;
+  offsetX?: number;
+  finalScale?: number;
+  phase?: number;
+}) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const scaleRef = useRef(0.6);
+  const scaleRef = useRef(0.6 * finalScale);
 
   // Flat, thin shingle: width along local X (0.5), height on Y (0.02), depth on Z (0.15).
   const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.02, 0.15), []);
@@ -101,8 +111,9 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     // Entrance scale-in + fixed 3D presentation tilt.
     // Group tilt: X = -60° (tip back), Y = +20° (yaw).
     if (groupRef.current) {
-      scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
+      scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
+      groupRef.current.position.x = offsetX;
 
       const baseX = -Math.PI / 3;         // -60°
       const baseY = (20 * Math.PI) / 180; // +20°
@@ -125,7 +136,7 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
 
     for (let i = 0; i < PLATE_COUNT; i++) {
       // Per-plate angle around the loop, advancing continuously.
-      const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2;
+      const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2 + phase;
       const cT = Math.cos(theta);
       const sT = Math.sin(theta);
 
@@ -244,19 +255,32 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Fit-to-view so the ribbon stays framed on portrait mobile and wide desktop.
+  // Four Möbius strips laid out side-by-side.
+  const STRIP_SCALE = 0.55;
+  const STRIP_SPACING = 3.2;
+  const strips = useMemo(
+    () => [-1.5, -0.5, 0.5, 1.5].map((k, i) => ({
+      offsetX: k * STRIP_SPACING,
+      phase: (i * Math.PI) / 2.7, // desync each so they don't move in lockstep
+    })),
+    [],
+  );
+
+  // Fit-to-view: horizontal extent = outermost offset + strip radius.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const boundingR = R * 1.25;
+    const halfWidth =
+      Math.abs(strips[strips.length - 1].offsetX) + R * STRIP_SCALE * 1.15;
+    const halfHeight = R * STRIP_SCALE * 1.3;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    const zForHeight = boundingR / Math.tan(fovRad / 2);
-    const zForWidth = boundingR / (Math.tan(fovRad / 2) * aspect);
+    const zForHeight = halfHeight / Math.tan(fovRad / 2);
+    const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, strips]);
 
   return (
     <>
@@ -274,7 +298,15 @@ const Scene = ({
       />
 
       {quality.enableStarfield && <WideStarfield />}
-      <MobiusMesh enableCursorTilt={quality.enableCursorTilt} />
+      {strips.map((s, i) => (
+        <MobiusMesh
+          key={i}
+          enableCursorTilt={quality.enableCursorTilt}
+          offsetX={s.offsetX}
+          finalScale={STRIP_SCALE}
+          phase={s.phase}
+        />
+      ))}
       <FpsReporter report={quality.report} />
     </>
   );
