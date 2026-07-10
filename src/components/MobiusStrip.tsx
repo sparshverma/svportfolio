@@ -28,14 +28,18 @@ const mouseTarget = { x: 0, y: 0 };
 
 const MobiusMesh = ({
   enableCursorTilt,
-  offsetX = 0,
   finalScale = 1,
   phase = 0,
+  extraRotX = 0,
+  extraRotY = 0,
+  extraRotZ = 0,
 }: {
   enableCursorTilt: boolean;
-  offsetX?: number;
   finalScale?: number;
   phase?: number;
+  extraRotX?: number;
+  extraRotY?: number;
+  extraRotZ?: number;
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
@@ -113,18 +117,23 @@ const MobiusMesh = ({
     if (groupRef.current) {
       scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
-      groupRef.current.position.x = offsetX;
+      // All strips share the origin — entanglement comes from per-strip
+      // Euler offsets that weave their rings through one another.
+      groupRef.current.position.set(0, 0, 0);
 
-      const baseX = -Math.PI / 3;         // -60°
-      const baseY = (20 * Math.PI) / 180; // +20°
+      const baseX = -Math.PI / 3 + extraRotX;         // -60° + per-strip tilt
+      const baseY = (20 * Math.PI) / 180 + extraRotY; // +20° + per-strip yaw
+      const baseZ = extraRotZ;
       if (enableCursorTilt) {
-        const targetX = baseX + mouseTarget.y * 0.1;
-        const targetY = baseY + mouseTarget.x * 0.12;
+        const targetX = baseX + mouseTarget.y * 0.08;
+        const targetY = baseY + mouseTarget.x * 0.1;
         groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
         groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.05;
+        groupRef.current.rotation.z += (baseZ - groupRef.current.rotation.z) * 0.05;
       } else {
         groupRef.current.rotation.x += (baseX - groupRef.current.rotation.x) * 0.05;
         groupRef.current.rotation.y += (baseY - groupRef.current.rotation.y) * 0.05;
+        groupRef.current.rotation.z += (baseZ - groupRef.current.rotation.z) * 0.05;
       }
     }
 
@@ -255,32 +264,32 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Four Möbius strips laid out side-by-side.
-  const STRIP_SCALE = 0.55;
-  const STRIP_SPACING = 3.2;
+  // Four Möbius strips entangled at the origin — each oriented on a
+  // different axis so their rings weave through one another.
+  const STRIP_SCALE = 0.85;
   const strips = useMemo(
-    () => [-1.5, -0.5, 0.5, 1.5].map((k, i) => ({
-      offsetX: k * STRIP_SPACING,
-      phase: (i * Math.PI) / 2.7, // desync each so they don't move in lockstep
-    })),
+    () => [
+      { phase: 0,                extraRotX: 0,             extraRotY: 0,             extraRotZ: 0 },
+      { phase: Math.PI * 0.37,   extraRotX: Math.PI / 2,   extraRotY: 0,             extraRotZ: Math.PI / 6 },
+      { phase: Math.PI * 0.73,   extraRotX: 0,             extraRotY: Math.PI / 2,   extraRotZ: -Math.PI / 6 },
+      { phase: Math.PI * 1.11,   extraRotX: Math.PI / 3,   extraRotY: Math.PI / 3,   extraRotZ: Math.PI / 4 },
+    ],
     [],
   );
 
-  // Fit-to-view: horizontal extent = outermost offset + strip radius.
+  // Fit-to-view: rings share the origin, bounding sphere ≈ R * STRIP_SCALE.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth =
-      Math.abs(strips[strips.length - 1].offsetX) + R * STRIP_SCALE * 1.15;
-    const halfHeight = R * STRIP_SCALE * 1.3;
+    const bound = R * STRIP_SCALE * 1.35;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    const zForHeight = halfHeight / Math.tan(fovRad / 2);
-    const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
+    const zForHeight = bound / Math.tan(fovRad / 2);
+    const zForWidth = bound / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height, strips]);
+  }, [camera, size.width, size.height]);
 
   return (
     <>
@@ -302,9 +311,11 @@ const Scene = ({
         <MobiusMesh
           key={i}
           enableCursorTilt={quality.enableCursorTilt}
-          offsetX={s.offsetX}
           finalScale={STRIP_SCALE}
           phase={s.phase}
+          extraRotX={s.extraRotX}
+          extraRotY={s.extraRotY}
+          extraRotZ={s.extraRotZ}
         />
       ))}
       <FpsReporter report={quality.report} />
