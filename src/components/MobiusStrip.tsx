@@ -292,12 +292,14 @@ const Scene = ({
   const { camera, size } = useThree();
   const baseZRef = useRef(8);
 
-  // Frame the tilted, flattened loop to roughly fill the canvas horizontally
-  // while leaving generous vertical breathing room.
+  // Frame the full loop with generous padding at every aspect. Because the
+  // presentation tilt on X (~66°) foreshortens the Y-extent while adding a
+  // small Z-projection, we conservatively pad both axes so the entire
+  // twist is always visible, never cropped.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 1.5;
-    const halfHeight = (R + W) * 1.8;
+    const halfWidth = (R + W) * ELONG * 1.9;   // extra horizontal padding
+    const halfHeight = (R + W) * 2.2;          // extra vertical padding
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
