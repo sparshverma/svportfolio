@@ -186,12 +186,12 @@ const MobiusMesh = ({
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 2);
       outerRef.current.scale.setScalar(scaleRef.current);
 
-      // Fixed presentation tilt (~30° back on X) + gentle X wobble +
-      // optional cursor parallax.
-      const baseX = -0.52;
+      // Horizontal "infinity" presentation: tilt strongly on X so we view
+      // the loop nearly from above, giving it a wide, flat silhouette.
+      const baseX = -1.15; // ~ -66°
       const baseY = 0.14;
-      const wobble = Math.sin(t * 0.35) * 0.05;
-      const mx = mouseTilt ? mouseTarget.y * 0.05 : 0;
+      const wobble = Math.sin(t * 0.35) * 0.04;
+      const mx = mouseTilt ? mouseTarget.y * 0.04 : 0;
       const my = mouseTilt ? mouseTarget.x * 0.06 : 0;
       const targetX = baseX + wobble + mx;
       const targetY = baseY + my;
