@@ -259,12 +259,11 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
 const Scene = ({ quality }: { quality: QualitySettings & { report: (dt: number) => void } }) => {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(0, 0, 4.6);
+    camera.position.set(0, 0, 3.4);
     camera.lookAt(0, 0, 0);
   }, [camera]);
   return (
     <>
-      <color attach="background" args={['#010101']} />
       <ambientLight intensity={0.18} />
       {/* Warm key light */}
       <pointLight position={[3, 2.5, 3.5]} intensity={1.6} color="#F3D46C" distance={14} />
