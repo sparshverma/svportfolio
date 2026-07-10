@@ -338,7 +338,12 @@ const Scene = ({
     quality.tier === 'high' ? 140 : quality.tier === 'mid' ? 100 : 70;
 
   return (
-    <>
+      {/* HDRI environment — provides real-world specular reflections that
+          catch crisply on the beveled plate edges as they crawl. */}
+      <Environment preset="studio" background={false} resolution={512} />
+
+      {/* Overlay lightformers baked into scene.environment for warm gold
+          rim highlights on top of the HDRI base. */}
       <Environment resolution={256} frames={1} background={false}>
         <Lightformer
           form="rect"
