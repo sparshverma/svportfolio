@@ -260,11 +260,15 @@ const Scene = ({
 
   return (
     <>
-      {/* Clean minimal lighting: soft ambient + one sharp top-right-front key */}
-      <ambientLight intensity={0.3} color="#ffffff" />
+      {/* HDRI env map — required so metalness=0.85 surfaces reflect real
+          light instead of rendering pitch black. */}
+      <Environment preset="city" background={false} />
+
+      {/* Ambient fill + sharp angled key for crisp metallic edge highlights */}
+      <ambientLight intensity={0.4} color="#ffffff" />
       <directionalLight
-        position={[5, 5, 5]}
-        intensity={1.5}
+        position={[5, 10, 5]}
+        intensity={2.5}
         color="#ffffff"
         castShadow={false}
       />
