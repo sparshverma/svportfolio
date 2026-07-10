@@ -8,23 +8,31 @@ import { FpsMeter } from '@/lib/perf/fpsMeter';
 // Shared cursor state (normalized -1..1).
 const mouseTarget = { x: 0, y: 0, active: 0 };
 
-// Palette — Igor Backstrom Möbius reference.
-const BG = '#010101';
+// Palette — deep charcoal / slate-teal with bronze + gold accents
+const SLATE_TEAL = new THREE.Color('#325755');
+const CHARCOAL = new THREE.Color('#141618');
 const BRONZE = new THREE.Color('#563218');
-const TEAL = new THREE.Color('#325755');
 const GOLD = new THREE.Color('#F3D46C');
-const BRONZE_DEEP = new THREE.Color('#2a1a0d');
-const TEAL_DEEP = new THREE.Color('#1a2c2b');
+const DEEP_TEAL = new THREE.Color('#1a2c2b');
 
-// Möbius parameters.
-const R = 1.35;      // main radius
-const HALF_W = 0.42; // half band-width
+// Möbius parameters — R = major radius of loop, W = half band-width
+const R = 1.55;
+const W = 0.42;
 
-function mobiusPoint(u: number, v: number, out: THREE.Vector3) {
-  const c = Math.cos(u / 2);
-  const s = Math.sin(u / 2);
-  const rr = R + v * c;
-  out.set(rr * Math.cos(u), rr * Math.sin(u), v * s);
+/**
+ * Parametric Möbius strip centerline:
+ *   x = (R + w·cos(θ/2)) · cos(θ)
+ *   y = (R + w·cos(θ/2)) · sin(θ)
+ *   z =  w·sin(θ/2)
+ * A single full revolution θ ∈ [0, 2π] yields the classic half-twist —
+ * following a point around returns it to the opposite side; two circuits
+ * bring it home.
+ */
+function mobiusAt(theta: number, w: number, out: THREE.Vector3) {
+  const c = Math.cos(theta / 2);
+  const s = Math.sin(theta / 2);
+  const rr = R + w * c;
+  out.set(rr * Math.cos(theta), rr * Math.sin(theta), w * s);
 }
 
 function mulberry32(seed: number) {
@@ -40,56 +48,57 @@ function mulberry32(seed: number) {
 }
 
 /**
- * Precompute per-instance data (base u, v offset, jitter, color) for the
- * Möbius strip. The actual world matrix is rebuilt every frame in useFrame
- * so we can animate `u += t*speed` — tiles FLOW along the strip's path,
- * producing the "turning inside out" effect (surface returns to start after
- * two full trips, since a Möbius is one-sided).
+ * Precompute per-instance metadata: base θ offset, cross-section w offset
+ * (two rails of plates riding the strip), scale jitter, tint.
  */
 function buildInstanceData(segments: number) {
   const rows = 2;
   const count = segments * rows;
 
-  const baseU = new Float32Array(count);
-  const baseV = new Float32Array(count);
+  const baseTheta = new Float32Array(count);
+  const wOffset = new Float32Array(count);
   const spin = new Float32Array(count);
   const scaleX = new Float32Array(count);
   const scaleY = new Float32Array(count);
   const scaleZ = new Float32Array(count);
   const colors = new Float32Array(count * 3);
   const tmpColor = new THREE.Color();
-  const rng = mulberry32(9173);
+  const rng = mulberry32(0x51ad);
 
+  // Approximate arc length: 2πR — tile length picked so plates pack tightly
   const circumference = 2 * Math.PI * R;
-  const tileTangential = (circumference / segments) * 0.9;
-  const tileWidth = HALF_W * 0.92;
+  const plateLen = (circumference / segments) * 0.94;
+  const plateWid = W * 0.9;
 
   for (let r = 0; r < rows; r++) {
-    const vCenter = (r === 0 ? -0.5 : 0.5) * HALF_W;
+    const wCenter = (r === 0 ? -0.5 : 0.5) * W;
     for (let i = 0; i < segments; i++) {
       const idx = r * segments + i;
-      const u = (i / segments) * Math.PI * 2;
-      baseU[idx] = u;
-      baseV[idx] = vCenter;
-      spin[idx] = (rng() - 0.5) * 0.06;
-      const jitter = 0.94 + rng() * 0.12;
-      scaleX[idx] = tileTangential * jitter;
-      scaleY[idx] = tileWidth * (0.9 + rng() * 0.15);
-      scaleZ[idx] = 0.035 + rng() * 0.02;
+      baseTheta[idx] = (i / segments) * Math.PI * 2;
+      wOffset[idx] = wCenter;
+      spin[idx] = (rng() - 0.5) * 0.04;
 
-      const side = Math.sign(Math.cos(u / 2)) * (r === 0 ? 1 : -1);
-      const warm = side > 0;
-      const base = warm ? BRONZE : TEAL;
-      const deep = warm ? BRONZE_DEEP : TEAL_DEEP;
-      const highlight = warm ? GOLD : TEAL;
-      tmpColor.copy(deep).lerp(base, rng()).lerp(highlight, rng() * 0.35);
+      const jx = 0.92 + rng() * 0.14;
+      scaleX[idx] = plateLen * jx;
+      scaleY[idx] = plateWid * (0.88 + rng() * 0.16);
+      scaleZ[idx] = 0.038 + rng() * 0.022;
+
+      // Distribute colors: mostly slate-teal + charcoal, sparse bronze/gold
+      const roll = rng();
+      let base: THREE.Color;
+      if (roll < 0.55) base = SLATE_TEAL;
+      else if (roll < 0.82) base = CHARCOAL;
+      else if (roll < 0.94) base = BRONZE;
+      else base = GOLD;
+
+      tmpColor.copy(DEEP_TEAL).lerp(base, 0.55 + rng() * 0.45);
       colors[idx * 3 + 0] = tmpColor.r;
       colors[idx * 3 + 1] = tmpColor.g;
       colors[idx * 3 + 2] = tmpColor.b;
     }
   }
 
-  return { baseU, baseV, spin, scaleX, scaleY, scaleZ, colors, count };
+  return { baseTheta, wOffset, spin, scaleX, scaleY, scaleZ, colors, count };
 }
 
 const MobiusMesh = ({
@@ -110,20 +119,35 @@ const MobiusMesh = ({
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        metalness: 0.55,
-        roughness: 0.5,
-        envMapIntensity: 1.4,
+        metalness: 0.85,
+        roughness: 0.35,
+        envMapIntensity: 1.35,
         vertexColors: true,
       }),
     [],
   );
 
-  // Scratch vectors reused across frames — zero per-frame allocations
+  // Per-instance colors
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const colorAttr = new THREE.InstancedBufferAttribute(colors, 3);
+    meshRef.current.instanceColor = colorAttr;
+    colorAttr.needsUpdate = true;
+  }, [colors]);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
+  // Reusable scratch objects — zero per-frame allocations
   const scratch = useMemo(
     () => ({
       p: new THREE.Vector3(),
-      pu: new THREE.Vector3(),
-      pv: new THREE.Vector3(),
+      pNext: new THREE.Vector3(),
+      pWide: new THREE.Vector3(),
       tangent: new THREE.Vector3(),
       bitangent: new THREE.Vector3(),
       normal: new THREE.Vector3(),
@@ -135,39 +159,20 @@ const MobiusMesh = ({
     [],
   );
 
-  // Set per-instance colors once
-  useEffect(() => {
-    if (!meshRef.current) return;
-    const colorAttr = new THREE.InstancedBufferAttribute(colors, 3);
-    meshRef.current.instanceColor = colorAttr;
-    colorAttr.needsUpdate = true;
-  }, [colors]);
-
-  // Dispose on unmount
-  useEffect(() => {
-    return () => {
-      geometry.dispose();
-      material.dispose();
-    };
-  }, [geometry, material]);
-
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Entrance scale-in on the group. NO rigid Y-axis spin — the ring stays
-    // fixed in space; motion comes entirely from tiles crawling along the
-    // Möbius path below ("treadmill" / conveyor belt effect).
+    // Entrance scale-in — group otherwise stationary on primary axes.
     if (groupRef.current) {
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
 
-      // Static forward tilt so ring reads as 3D — cursor nudges it
-      const baseTiltX = -0.32;
+      const baseTiltX = -0.34;
       if (enableCursorTilt) {
-        const targetX = baseTiltX + mouseTarget.y * 0.15;
-        const targetZ = mouseTarget.x * 0.1;
+        const targetX = baseTiltX + mouseTarget.y * 0.14;
+        const targetZ = mouseTarget.x * 0.09;
         groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
         groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
       } else {
@@ -175,27 +180,31 @@ const MobiusMesh = ({
       }
     }
 
-    // Möbius conveyor: each tile advances its `u` parameter continuously.
-    // The Möbius parametrization (cos(u/2), sin(u/2) in the cross-section)
-    // supplies the intrinsic half-twist so tiles seamlessly transition
-    // between inner and outer surfaces over each full 2π loop, returning
-    // to the exact starting configuration after two circuits — an unbroken
-    // perfectly-looping cycle.
-    const uOffset = t * 0.22;
-
-    const { p, pu, pv, tangent, bitangent, normal, m, q, spinQ, scale } = scratch;
-    const eps = 0.003;
+    // Global conveyor offset — advances every instance's θ.
+    const flow = t * 0.24;
     const TWO_PI = Math.PI * 2;
+    const eps = 0.004;
+
+    const {
+      p, pNext, pWide, tangent, bitangent, normal,
+      m, q, spinQ, scale,
+    } = scratch;
 
     for (let i = 0; i < count; i++) {
-      const u = (data.baseU[i] + uOffset) % TWO_PI;
-      const v = data.baseV[i];
+      // Progress wraps seamlessly via modulo — infinite loop.
+      const theta = (data.baseTheta[i] + flow) % TWO_PI;
+      const w = data.wOffset[i];
 
-      mobiusPoint(u, v, p);
-      mobiusPoint(u + eps, v, pu);
-      mobiusPoint(u, v + eps, pv);
-      tangent.subVectors(pu, p).normalize();
-      bitangent.subVectors(pv, p).normalize();
+      // Frenet-like basis from the Möbius parametrization itself.
+      // The parametrization's own cos(θ/2)/sin(θ/2) cross-section provides
+      // the intrinsic 180° twist per full revolution — plates cleanly
+      // transition inside↔outside as θ crosses 2π (two circuits home).
+      mobiusAt(theta, w, p);
+      mobiusAt(theta + eps, w, pNext);
+      mobiusAt(theta, w + eps, pWide);
+
+      tangent.subVectors(pNext, p).normalize();
+      bitangent.subVectors(pWide, p).normalize();
       normal.crossVectors(tangent, bitangent).normalize();
       bitangent.crossVectors(normal, tangent).normalize();
 
@@ -232,10 +241,7 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
-/**
- * Wide starfield that spans well beyond the Möbius bounds so it fills the
- * whole hero. Slowly pans (drift + rotation) to feel alive.
- */
+/** Wide starfield spanning well beyond the Möbius bounds. */
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
   const { positions, sizes } = useMemo(() => {
@@ -243,7 +249,6 @@ const WideStarfield = () => {
     const pos = new Float32Array(N * 3);
     const sz = new Float32Array(N);
     for (let i = 0; i < N; i++) {
-      // Wide spread across XY; deep Z so stars stay behind the ring
       pos[i * 3 + 0] = (Math.random() - 0.5) * 22;
       pos[i * 3 + 1] = (Math.random() - 0.5) * 14;
       pos[i * 3 + 2] = -6 - Math.random() * 8;
@@ -255,7 +260,6 @@ const WideStarfield = () => {
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    // Slow horizontal pan + gentle rotation for parallax feel
     groupRef.current.position.x = Math.sin(t * 0.04) * 1.4;
     groupRef.current.position.y = Math.cos(t * 0.03) * 0.6;
     groupRef.current.rotation.z = t * 0.008;
@@ -289,13 +293,12 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Fit-to-view: Möbius bounding radius ≈ R + HALF_W = 1.77. Compute the
-  // camera Z that fits that radius vertically (or horizontally on portrait).
-  // Divide by `fill` (< 1) to zoom in and make the ring appear larger.
+  // Fit-to-view: bounding radius ≈ R + W. Scales the visible Möbius so it
+  // stays perfectly framed on portrait mobile and wide desktop.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const fill = 0.72; // <1 = bigger strip in frame
-    const boundingR = (R + HALF_W) / fill;
+    const fill = 0.72;
+    const boundingR = (R + W) / fill;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = boundingR / Math.tan(fovRad / 2);
@@ -306,44 +309,39 @@ const Scene = ({
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
 
-  // Segments scale with tier: high=140, mid=100, low=64 (× 2 rows)
+  // 200–300 plates target: high=280 (140×2), mid=200 (100×2), low=140 (70×2)
   const segments =
-    quality.tier === 'high' ? 140 : quality.tier === 'mid' ? 100 : 64;
+    quality.tier === 'high' ? 140 : quality.tier === 'mid' ? 100 : 70;
 
   return (
     <>
-      {/* Custom studio environment — provides reflections for metallic tiles */}
       <Environment resolution={256} frames={1} background={false}>
-        {/* Warm key */}
         <Lightformer
           form="rect"
-          intensity={6}
+          intensity={5}
           color="#F3D46C"
           position={[3, 3, 4]}
           rotation={[0, -Math.PI / 4, 0]}
           scale={[4, 4, 1]}
         />
-        {/* Gold accent */}
         <Lightformer
           form="ring"
-          intensity={3}
+          intensity={2.5}
           color="#F3D46C"
           position={[0, 2, 3]}
           scale={[2, 2, 1]}
         />
-        {/* Cool teal rim */}
         <Lightformer
           form="rect"
-          intensity={3}
+          intensity={2.6}
           color="#325755"
           position={[-4, -1, -3]}
           rotation={[0, Math.PI / 3, 0]}
           scale={[4, 3, 1]}
         />
-        {/* Bronze underglow */}
         <Lightformer
           form="rect"
-          intensity={2}
+          intensity={1.8}
           color="#563218"
           position={[0, -3, 2]}
           rotation={[Math.PI / 2, 0, 0]}
@@ -351,25 +349,23 @@ const Scene = ({
         />
       </Environment>
 
-      {/* Ambient — bright enough to keep tiles readable */}
-      <ambientLight intensity={1.1} color="#5a4632" />
+      <ambientLight intensity={0.55} color="#3a4a4a" />
 
-      {/* Directional key light — crisp warm highlights */}
+      {/* Sharp off-center key — crisp specular on plate edges */}
       <directionalLight
         position={[5, 6, 4]}
-        intensity={4.5}
+        intensity={4.2}
         color="#F3D46C"
       />
 
       {/* Cool rim from behind for silhouette */}
       <directionalLight
         position={[-4, -2, -4]}
-        intensity={2.4}
+        intensity={2}
         color="#7ab0aa"
       />
 
-      {/* Warm fill from below-front */}
-      <pointLight position={[0, -1, 4]} intensity={2} color="#F3D46C" distance={10} decay={1.5} />
+      <pointLight position={[0, -1, 4]} intensity={1.4} color="#F3D46C" distance={10} decay={1.5} />
 
       {quality.enableStarfield && <WideStarfield />}
       <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
