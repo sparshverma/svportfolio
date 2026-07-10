@@ -274,6 +274,7 @@ type SceneProps = {
   quality: QualitySettings & { report: (dt: number) => void };
   primaryColor: string;
   secondaryColor: string;
+  midColor: string;
   rotationSpeed: number;
   mouseTilt: boolean;
   cameraDrift: boolean;
@@ -283,6 +284,7 @@ const Scene = ({
   quality,
   primaryColor,
   secondaryColor,
+  midColor,
   rotationSpeed,
   mouseTilt,
   cameraDrift,
@@ -290,17 +292,20 @@ const Scene = ({
   const { camera, size } = useThree();
   const baseZRef = useRef(8);
 
+  // Fit strip to ~45% of viewport width (padding factor 1/0.45 ≈ 2.2), and
+  // frame it slightly above center so it sits behind the lower portion of
+  // the hero content rather than colliding with the heading.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 1.35;
-    const halfHeight = (R + W) * 1.55;
+    const halfWidth = (R + W) * ELONG * 2.4;
+    const halfHeight = (R + W) * 2.6;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     baseZRef.current = z;
-    camera.position.set(0, 0.3, z);
+    camera.position.set(0, 1.1, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
@@ -308,9 +313,8 @@ const Scene = ({
   useFrame((state) => {
     if (!cameraDrift) return;
     const t = state.clock.elapsedTime;
-    // Very subtle parallax drift — feels alive without being distracting.
     camera.position.x = Math.sin(t * 0.15) * 0.12;
-    camera.position.y = 0.3 + Math.cos(t * 0.12) * 0.08;
+    camera.position.y = 1.1 + Math.cos(t * 0.12) * 0.06;
     camera.position.z = baseZRef.current + Math.sin(t * 0.1) * 0.1;
     camera.lookAt(0, 0, 0);
   });
@@ -319,12 +323,8 @@ const Scene = ({
     <>
       <ambientLight intensity={0.35} color="#c8d3e0" />
       <hemisphereLight intensity={0.25} color="#e2e8f2" groundColor="#0a0d14" />
-
-      {/* Key light — warm, travels highlights across the ribbon. */}
       <directionalLight position={[6, 8, 5]} intensity={1.6} color="#fdf7e8" />
-      {/* Cool fill from opposite side. */}
       <directionalLight position={[-5, -2, 4]} intensity={0.5} color="#93a3b8" />
-      {/* Rim light from behind to separate the strip from the background. */}
       <directionalLight position={[0, 2, -6]} intensity={1.2} color="#a78bfa" />
 
       <Environment preset="studio" />
@@ -334,6 +334,7 @@ const Scene = ({
         quality={quality}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
+        midColor={midColor}
         rotationSpeed={rotationSpeed}
         mouseTilt={mouseTilt}
       />
