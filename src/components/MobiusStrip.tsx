@@ -17,7 +17,7 @@ const DEEP_TEAL = new THREE.Color('#1a2c2b');
 
 // Möbius parameters — R = major radius of loop, W = half band-width
 const R = 1.55;
-const W = 0.42;
+const W = 0.62;
 
 /**
  * Parametric Möbius strip centerline:
