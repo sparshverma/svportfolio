@@ -14,9 +14,9 @@ import { FpsMeter } from '@/lib/perf/fpsMeter';
 // ---------------------------------------------------------------------------
 
 const R = 1.6;
-const ELONG = 2.05;
-const W = 0.42;
-const U_SEGMENTS = 320;
+const ELONG = 1.9;
+const W = 0.22;          // slim ribbon so the twist reads clearly
+const U_SEGMENTS = 400;  // extra resolution across the twist
 const V_SEGMENTS = 40;
 const TWO_PI = Math.PI * 2;
 
