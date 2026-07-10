@@ -37,7 +37,8 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     () =>
       new THREE.MeshStandardMaterial({
         metalness: 0.85,
-        roughness: 0.4,
+        roughness: 0.35,
+        envMapIntensity: 1.2,
         vertexColors: true,
       }),
     [],
