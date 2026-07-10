@@ -338,6 +338,8 @@ const Scene = ({
     quality.tier === 'high' ? 140 : quality.tier === 'mid' ? 100 : 70;
 
   return (
+    <>
+
       {/* HDRI environment — provides real-world specular reflections that
           catch crisply on the beveled plate edges as they crawl. */}
       <Environment preset="studio" background={false} resolution={512} />
