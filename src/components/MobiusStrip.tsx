@@ -195,14 +195,18 @@ const MobiusMesh = ({
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
 
-      const baseTiltX = -0.34;
+      // Fixed 3D presentation tilt: back on X (~ -52°) + yaw on Y (~ +20°)
+      // so the viewer sees depth, perspective, and the signature half-twist.
+      const baseTiltX = -0.9;
+      const baseTiltY = 0.35;
       if (enableCursorTilt) {
-        const targetX = baseTiltX + mouseTarget.y * 0.14;
-        const targetZ = mouseTarget.x * 0.09;
+        const targetX = baseTiltX + mouseTarget.y * 0.12;
+        const targetY = baseTiltY + mouseTarget.x * 0.14;
         groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
-        groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
+        groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.05;
       } else {
         groupRef.current.rotation.x += (baseTiltX - groupRef.current.rotation.x) * 0.05;
+        groupRef.current.rotation.y += (baseTiltY - groupRef.current.rotation.y) * 0.05;
       }
     }
 
