@@ -81,11 +81,12 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     () => ({
       pos: new THREE.Vector3(),
       scale: new THREE.Vector3(1, 1, 1),
-      qYaw: new THREE.Quaternion(),
-      qTwist: new THREE.Quaternion(),
-      qFinal: new THREE.Quaternion(),
-      m: new THREE.Matrix4(),
       tangent: new THREE.Vector3(),
+      normal: new THREE.Vector3(),
+      binormal: new THREE.Vector3(),
+      twistedNormal: new THREE.Vector3(),
+      twistedBinormal: new THREE.Vector3(),
+      m: new THREE.Matrix4(),
     }),
     [],
   );
@@ -114,28 +115,50 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
     }
 
     const t = state.clock.getElapsedTime();
-    const { pos, scale, qYaw, qTwist, qFinal, m, tangent } = scratch;
+    const {
+      pos, scale, tangent, normal, binormal,
+      twistedNormal, twistedBinormal, m,
+    } = scratch;
 
     for (let i = 0; i < PLATE_COUNT; i++) {
       // Per-plate angle around the loop, advancing continuously.
       const theta = (i / PLATE_COUNT) * TWO_PI + t * 0.2;
+      const cT = Math.cos(theta);
+      const sT = Math.sin(theta);
 
-      // Centerline position on the circle in the XY plane.
-      pos.set(R * Math.cos(theta), R * Math.sin(theta), 0);
+      // Centerline on the circle in the XY plane, radius R.
+      pos.set(R * cT, R * sT, 0);
 
-      // 1) Yaw: rotate around world Z by (θ + π/2) so the plate's local X
-      //    (its long "width" edge) aligns with the tangent direction of travel.
-      qYaw.setFromAxisAngle(_UP, theta + Math.PI / 2);
+      // Frenet-style frame for a circle at this point.
+      tangent.set(-sT, cT, 0);   // direction of travel
+      normal.set(-cT, -sT, 0);   // radial inward
+      binormal.set(0, 0, 1);     // world up
 
-      // 2) Twist: rotate around the local longitudinal (tangent) axis by θ/2
-      //    → the ribbon completes a clean 180° Möbius flip over one full lap.
-      tangent.set(-Math.sin(theta), Math.cos(theta), 0);
-      qTwist.setFromAxisAngle(tangent, theta / 2);
+      // Möbius half-angle twist: α = θ / 2. Rotate the (normal, binormal)
+      // cross-section frame around the tangent axis by α so it flips
+      // exactly 180° over one full lap (θ: 0 → 2π ⇒ α: 0 → π).
+      const alpha = theta / 2;
+      const cA = Math.cos(alpha);
+      const sA = Math.sin(alpha);
 
-      // Apply twist AFTER yaw (both in world space → premultiply twist).
-      qFinal.multiplyQuaternions(qTwist, qYaw);
+      twistedNormal.set(
+        normal.x * cA + binormal.x * sA,
+        normal.y * cA + binormal.y * sA,
+        normal.z * cA + binormal.z * sA,
+      );
+      twistedBinormal.set(
+        -normal.x * sA + binormal.x * cA,
+        -normal.y * sA + binormal.y * cA,
+        -normal.z * sA + binormal.z * cA,
+      );
 
-      m.compose(pos, qFinal, scale);
+      // Compose basis so plate axes map to the ribbon frame:
+      //   local X (length, 0.5) → tangent   — forward along the path
+      //   local Y (thickness, 0.02) → twisted normal — flat face normal
+      //   local Z (width, 0.15) → twisted binormal — across the ribbon
+      m.makeBasis(tangent, twistedNormal, twistedBinormal);
+      m.setPosition(pos);
+      m.scale(scale);
       mesh.setMatrixAt(i, m);
     }
     mesh.instanceMatrix.needsUpdate = true;
@@ -152,7 +175,7 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
   );
 };
 
-const _UP = new THREE.Vector3(0, 0, 1);
+
 
 // ---------------------------------------------------------------------------
 // Starfield — preserved exactly as before (panning background layer).
