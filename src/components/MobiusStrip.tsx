@@ -465,6 +465,7 @@ export const MobiusStrip = ({
               quality={quality}
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
+              midColor={midColor}
               rotationSpeed={rotationSpeed}
               mouseTilt={mouseTilt}
               cameraDrift={cameraDrift}
