@@ -175,7 +175,7 @@ const MobiusMesh = ({ enableCursorTilt }: { enableCursorTilt: boolean }) => {
   );
 };
 
-const _UP = new THREE.Vector3(0, 0, 1);
+
 
 // ---------------------------------------------------------------------------
 // Starfield — preserved exactly as before (panning background layer).
