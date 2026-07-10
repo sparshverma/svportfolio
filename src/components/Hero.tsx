@@ -16,9 +16,13 @@ export const Hero = () => {
       animationDelay: '1s'
     }} />
       
-      {/* 3D Möbius Strip - Lazy loaded */}
-      <Suspense fallback={<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />}>
-        <MobiusStrip />
+      {/* 3D Möbius Strip - horizontal accent band anchored to the bottom
+          of the hero on md+ so it never crosses the heading, subtitle, or
+          CTA. Hidden entirely on small viewports. */}
+      <Suspense fallback={null}>
+        <div className="hidden md:block">
+          <MobiusStrip containerClassName="absolute inset-x-0 bottom-0 h-[62%] pointer-events-none z-0 opacity-90" />
+        </div>
       </Suspense>
       
       {/* Content */}

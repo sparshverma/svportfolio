@@ -186,12 +186,12 @@ const MobiusMesh = ({
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 2);
       outerRef.current.scale.setScalar(scaleRef.current);
 
-      // Fixed presentation tilt (~30° back on X) + gentle X wobble +
-      // optional cursor parallax.
-      const baseX = -0.52;
+      // Horizontal "infinity" presentation: tilt strongly on X so we view
+      // the loop nearly from above, giving it a wide, flat silhouette.
+      const baseX = -1.15; // ~ -66°
       const baseY = 0.14;
-      const wobble = Math.sin(t * 0.35) * 0.05;
-      const mx = mouseTilt ? mouseTarget.y * 0.05 : 0;
+      const wobble = Math.sin(t * 0.35) * 0.04;
+      const mx = mouseTilt ? mouseTarget.y * 0.04 : 0;
       const my = mouseTilt ? mouseTarget.x * 0.06 : 0;
       const targetX = baseX + wobble + mx;
       const targetY = baseY + my;
@@ -292,20 +292,19 @@ const Scene = ({
   const { camera, size } = useThree();
   const baseZRef = useRef(8);
 
-  // Fit strip to ~45% of viewport width (padding factor 1/0.45 ≈ 2.2), and
-  // frame it slightly above center so it sits behind the lower portion of
-  // the hero content rather than colliding with the heading.
+  // Frame the tilted, flattened loop to roughly fill the canvas horizontally
+  // while leaving generous vertical breathing room.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = (R + W) * ELONG * 2.4;
-    const halfHeight = (R + W) * 2.6;
+    const halfWidth = (R + W) * ELONG * 1.5;
+    const halfHeight = (R + W) * 1.8;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
     const zForHeight = halfHeight / Math.tan(fovRad / 2);
     const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     baseZRef.current = z;
-    camera.position.set(0, 1.1, z);
+    camera.position.set(0, 0.4, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
@@ -314,7 +313,7 @@ const Scene = ({
     if (!cameraDrift) return;
     const t = state.clock.elapsedTime;
     camera.position.x = Math.sin(t * 0.15) * 0.12;
-    camera.position.y = 1.1 + Math.cos(t * 0.12) * 0.06;
+    camera.position.y = 0.4 + Math.cos(t * 0.12) * 0.06;
     camera.position.z = baseZRef.current + Math.sin(t * 0.1) * 0.1;
     camera.lookAt(0, 0, 0);
   });
@@ -365,6 +364,8 @@ export type MobiusStripProps = {
   mouseTilt?: boolean;
   /** Whether the camera drifts gently for parallax. Default: true. */
   cameraDrift?: boolean;
+  /** Positioning wrapper class. Defaults to a full-bleed background layer. */
+  containerClassName?: string;
 };
 
 export const MobiusStrip = ({
@@ -374,6 +375,7 @@ export const MobiusStrip = ({
   rotationSpeed = 1 / 18,
   mouseTilt = true,
   cameraDrift = true,
+  containerClassName = 'absolute inset-0 pointer-events-none z-0',
 }: MobiusStripProps = {}) => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
@@ -438,7 +440,7 @@ export const MobiusStrip = ({
   return (
     <div
       ref={wrapRef}
-      className="absolute inset-0 pointer-events-none z-0"
+      className={containerClassName}
       aria-hidden="true"
     >
       {shouldRender && (
