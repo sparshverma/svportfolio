@@ -116,18 +116,6 @@ const MobiusMesh = ({
     if (groupRef.current) {
       scaleRef.current += (finalScale - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
-
-      const baseX = -Math.PI / 3;         // -60° tilt back (shared)
-      const baseY = (20 * Math.PI) / 180; // +20° yaw    (shared)
-      if (enableCursorTilt) {
-        const targetX = baseX + mouseTarget.y * 0.08;
-        const targetY = baseY + mouseTarget.x * 0.1;
-        groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
-        groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.05;
-      } else {
-        groupRef.current.rotation.x += (baseX - groupRef.current.rotation.x) * 0.05;
-        groupRef.current.rotation.y += (baseY - groupRef.current.rotation.y) * 0.05;
-      }
     }
 
     const t = state.clock.getElapsedTime();
