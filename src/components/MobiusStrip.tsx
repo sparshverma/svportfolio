@@ -386,7 +386,7 @@ const Scene = ({
         />
       </Environment>
 
-      <ambientLight intensity={0.4} color="#3a4a4a" />
+      <ambientLight intensity={0.75} color="#4a5c5c" />
 
       {/* Sharp oblique key — intense gold highlights on plate edges */}
       <directionalLight
@@ -396,7 +396,16 @@ const Scene = ({
         castShadow={false}
       />
 
-      {/* Edge-grazing fill — crisp specular on the opposite rim */}
+      {/* Balanced counter-key on the opposite (right) side so the whole
+          ribbon reads, not just the bottom-left. */}
+      <directionalLight
+        position={[-6, 3, 4]}
+        intensity={3.8}
+        color="#F3ECDD"
+        castShadow={false}
+      />
+
+      {/* Edge-grazing fill for crisp specular on the opposite rim */}
       <directionalLight
         position={[-3, 2, 6]}
         intensity={2.4}
@@ -407,8 +416,15 @@ const Scene = ({
       {/* Cool rim from behind for silhouette */}
       <directionalLight
         position={[-4, -2, -4]}
-        intensity={1.6}
+        intensity={1.8}
         color="#7ab0aa"
+      />
+
+      {/* Warm underlight to lift the far-right section out of darkness */}
+      <directionalLight
+        position={[5, -3, 3]}
+        intensity={1.6}
+        color="#F3D46C"
       />
 
       <pointLight position={[0, -1, 4]} intensity={1.2} color="#F3D46C" distance={10} decay={1.5} />
