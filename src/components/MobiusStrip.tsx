@@ -65,10 +65,12 @@ function buildInstanceData(segments: number) {
   const tmpColor = new THREE.Color();
   const rng = mulberry32(0x51ad);
 
-  // Approximate arc length: 2πR — tile length picked so plates pack tightly
+  // Approximate arc length: 2πR — tile length picked so plates pack tightly.
+  // Sleek shingles: thinner (Z), wider across the ribbon (Y), shorter along
+  // the travel direction (X) so the loop reads as a continuous scaled track.
   const circumference = 2 * Math.PI * R;
-  const plateLen = (circumference / segments) * 0.94;
-  const plateWid = W * 0.9;
+  const plateLen = (circumference / segments) * 0.82;
+  const plateWid = W * 1.02;
 
   for (let r = 0; r < rows; r++) {
     const wCenter = (r === 0 ? -0.5 : 0.5) * W;
@@ -76,12 +78,12 @@ function buildInstanceData(segments: number) {
       const idx = r * segments + i;
       baseTheta[idx] = (i / segments) * Math.PI * 2;
       wOffset[idx] = wCenter;
-      spin[idx] = (rng() - 0.5) * 0.04;
+      spin[idx] = (rng() - 0.5) * 0.03;
 
-      const jx = 0.92 + rng() * 0.14;
+      const jx = 0.94 + rng() * 0.1;
       scaleX[idx] = plateLen * jx;
-      scaleY[idx] = plateWid * (0.88 + rng() * 0.16);
-      scaleZ[idx] = 0.038 + rng() * 0.022;
+      scaleY[idx] = plateWid * (0.9 + rng() * 0.12);
+      scaleZ[idx] = 0.018 + rng() * 0.012;
 
       // Distribute colors: mostly slate-teal + charcoal, sparse bronze/gold
       const roll = rng();
@@ -193,14 +195,18 @@ const MobiusMesh = ({
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
 
-      const baseTiltX = -0.34;
+      // Fixed 3D presentation tilt: back on X (~ -52°) + yaw on Y (~ +20°)
+      // so the viewer sees depth, perspective, and the signature half-twist.
+      const baseTiltX = -0.9;
+      const baseTiltY = 0.35;
       if (enableCursorTilt) {
-        const targetX = baseTiltX + mouseTarget.y * 0.14;
-        const targetZ = mouseTarget.x * 0.09;
+        const targetX = baseTiltX + mouseTarget.y * 0.12;
+        const targetY = baseTiltY + mouseTarget.x * 0.14;
         groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * 0.05;
-        groupRef.current.rotation.z += (targetZ - groupRef.current.rotation.z) * 0.05;
+        groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * 0.05;
       } else {
         groupRef.current.rotation.x += (baseTiltX - groupRef.current.rotation.x) * 0.05;
+        groupRef.current.rotation.y += (baseTiltY - groupRef.current.rotation.y) * 0.05;
       }
     }
 
@@ -380,7 +386,7 @@ const Scene = ({
         />
       </Environment>
 
-      <ambientLight intensity={0.4} color="#3a4a4a" />
+      <ambientLight intensity={0.75} color="#4a5c5c" />
 
       {/* Sharp oblique key — intense gold highlights on plate edges */}
       <directionalLight
@@ -390,7 +396,16 @@ const Scene = ({
         castShadow={false}
       />
 
-      {/* Edge-grazing fill — crisp specular on the opposite rim */}
+      {/* Balanced counter-key on the opposite (right) side so the whole
+          ribbon reads, not just the bottom-left. */}
+      <directionalLight
+        position={[-6, 3, 4]}
+        intensity={3.8}
+        color="#F3ECDD"
+        castShadow={false}
+      />
+
+      {/* Edge-grazing fill for crisp specular on the opposite rim */}
       <directionalLight
         position={[-3, 2, 6]}
         intensity={2.4}
@@ -401,8 +416,15 @@ const Scene = ({
       {/* Cool rim from behind for silhouette */}
       <directionalLight
         position={[-4, -2, -4]}
-        intensity={1.6}
+        intensity={1.8}
         color="#7ab0aa"
+      />
+
+      {/* Warm underlight to lift the far-right section out of darkness */}
+      <directionalLight
+        position={[5, -3, 3]}
+        intensity={1.6}
+        color="#F3D46C"
       />
 
       <pointLight position={[0, -1, 4]} intensity={1.2} color="#F3D46C" distance={10} decay={1.5} />
