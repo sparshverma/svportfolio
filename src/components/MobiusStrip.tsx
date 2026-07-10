@@ -156,14 +156,15 @@ const MobiusMesh = ({
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Entrance scale-in on the group (visual only)
+    // Entrance scale-in on the group + slow axial twist rotation
     if (groupRef.current) {
       scaleRef.current += (1 - scaleRef.current) * Math.min(1, delta * 3);
       groupRef.current.scale.setScalar(scaleRef.current);
 
-      // Subtle static tilt so ring reads as 3D — cursor can nudge it, but
-      // there is NO baseline rotation of the group (motion comes from tile
-      // flow instead).
+      // Slow axial "twist" — rotate the whole ring around its Y axis
+      groupRef.current.rotation.y += delta * 0.08;
+
+      // Static forward tilt so ring reads as 3D — cursor nudges it
       const baseTiltX = -0.32;
       if (enableCursorTilt) {
         const targetX = baseTiltX + mouseTarget.y * 0.15;
@@ -175,10 +176,8 @@ const MobiusMesh = ({
       }
     }
 
-    // Möbius "inside-out" flow: shift every tile's u by time. A full trip
-    // (u += 2π) puts each tile on the opposite side of the band — the strip
-    // appears to continuously turn through itself.
-    const uOffset = t * 0.55;
+    // Möbius "inside-out" flow — slower now that we also have axial twist
+    const uOffset = t * 0.18;
     const { p, pu, pv, tangent, bitangent, normal, m, q, spinQ, scale } = scratch;
     const eps = 0.003;
     const TWO_PI = Math.PI * 2;
@@ -228,6 +227,56 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
+/**
+ * Wide starfield that spans well beyond the Möbius bounds so it fills the
+ * whole hero. Slowly pans (drift + rotation) to feel alive.
+ */
+const WideStarfield = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const { positions, sizes } = useMemo(() => {
+    const N = 320;
+    const pos = new Float32Array(N * 3);
+    const sz = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      // Wide spread across XY; deep Z so stars stay behind the ring
+      pos[i * 3 + 0] = (Math.random() - 0.5) * 22;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 14;
+      pos[i * 3 + 2] = -6 - Math.random() * 8;
+      sz[i] = 0.6 + Math.random() * 1.6;
+    }
+    return { positions: pos, sizes: sz };
+  }, []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+    // Slow horizontal pan + gentle rotation for parallax feel
+    groupRef.current.position.x = Math.sin(t * 0.04) * 1.4;
+    groupRef.current.position.y = Math.cos(t * 0.03) * 0.6;
+    groupRef.current.rotation.z = t * 0.008;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} count={positions.length / 3} />
+          <bufferAttribute attach="attributes-size" args={[sizes, 1]} count={sizes.length} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.035}
+          sizeAttenuation
+          color="#F3ECDD"
+          transparent
+          opacity={0.55}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+    </group>
+  );
+};
+
 const Scene = ({
   quality,
 }: {
@@ -236,14 +285,14 @@ const Scene = ({
   const { camera, size } = useThree();
 
   // Fit-to-view: Möbius bounding radius ≈ R + HALF_W = 1.77. Compute the
-  // camera Z that fits that radius vertically (or horizontally on portrait)
-  // with a comfortable margin, using the current FOV.
+  // camera Z that fits that radius vertically (or horizontally on portrait).
+  // Divide by `fill` (< 1) to zoom in and make the ring appear larger.
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const boundingR = R + HALF_W + 0.25; // margin
+    const fill = 0.72; // <1 = bigger strip in frame
+    const boundingR = (R + HALF_W) / fill;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    // Vertical half-height at z: z * tan(fov/2). Horizontal: z * tan(fov/2)*aspect.
     const zForHeight = boundingR / Math.tan(fovRad / 2);
     const zForWidth = boundingR / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
@@ -317,6 +366,7 @@ const Scene = ({
       {/* Warm fill from below-front */}
       <pointLight position={[0, -1, 4]} intensity={2} color="#F3D46C" distance={10} decay={1.5} />
 
+      {quality.enableStarfield && <WideStarfield />}
       <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
       <FpsReporter report={quality.report} />
     </>
@@ -397,38 +447,33 @@ export const MobiusStrip = () => {
   return (
     <div
       ref={wrapRef}
-      className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
+      className="absolute inset-0 pointer-events-none z-0"
       aria-hidden="true"
     >
-      <div
-        className="aspect-square"
-        style={{ width: 'min(85vw, 70vh, 560px)', height: 'min(85vw, 70vh, 560px)' }}
-      >
-        {shouldRender && (
-          <Canvas
-            dpr={quality.dpr}
-            frameloop={visible ? 'always' : 'never'}
-            camera={{ position: [0, 0.4, 3.6], fov: 45 }}
-            gl={{
-              antialias: true,
-              alpha: true,
-              powerPreference: 'high-performance',
-              toneMapping: THREE.ACESFilmicToneMapping,
-            }}
-            onCreated={({ gl }) => {
-              gl.toneMappingExposure = 1.05;
-              gl.domElement.addEventListener('webglcontextlost', (e) => {
-                e.preventDefault();
-                setHasWebGL(false);
-              });
-            }}
-          >
-            <Suspense fallback={<LoadingIndicator />}>
-              <Scene quality={quality} />
-            </Suspense>
-          </Canvas>
-        )}
-      </div>
+      {shouldRender && (
+        <Canvas
+          dpr={quality.dpr}
+          frameloop={visible ? 'always' : 'never'}
+          camera={{ position: [0, 0.2, 4], fov: 45 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+            toneMapping: THREE.ACESFilmicToneMapping,
+          }}
+          onCreated={({ gl }) => {
+            gl.toneMappingExposure = 1.05;
+            gl.domElement.addEventListener('webglcontextlost', (e) => {
+              e.preventDefault();
+              setHasWebGL(false);
+            });
+          }}
+        >
+          <Suspense fallback={<LoadingIndicator />}>
+            <Scene quality={quality} />
+          </Suspense>
+        </Canvas>
+      )}
     </div>
   );
 };
