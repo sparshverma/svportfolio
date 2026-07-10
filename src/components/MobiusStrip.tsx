@@ -316,6 +316,7 @@ const Scene = ({
       {/* Warm fill from below-front */}
       <pointLight position={[0, -1, 4]} intensity={2} color="#F3D46C" distance={10} decay={1.5} />
 
+      {quality.enableStarfield && <WideStarfield />}
       <MobiusMesh segments={segments} enableCursorTilt={quality.enableCursorTilt} />
       <FpsReporter report={quality.report} />
     </>
