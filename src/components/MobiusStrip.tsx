@@ -1,9 +1,19 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Environment } from '@react-three/drei';
+import { Html, Environment, ContactShadows } from '@react-three/drei';
+import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
+
+export type LightingPreset = 'studio-soft' | 'warm-rim' | 'cool-fill';
+
+const PRESET_LABELS: Record<LightingPreset, string> = {
+  'studio-soft': 'Studio Soft',
+  'warm-rim': 'Warm Rim',
+  'cool-fill': 'Cool Fill',
+};
+
 
 // ---------------------------------------------------------------------------
 // Möbius ribbon — clean minimal spec:
