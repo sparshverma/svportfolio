@@ -140,19 +140,49 @@ export const Experience = () => {
 
           <div className="space-y-6 sm:space-y-8">
             {experiences.map((exp, i) => (
-              <ExperienceItem
+              <ExperienceRow
                 key={exp.title}
                 entry={exp}
                 index={i}
                 isExpanded={expanded === i}
                 isFaded={activeId !== null && activeId !== i}
-                onToggle={() => setExpanded((prev) => (prev === i ? -1 : i))}
-                onHover={(h) => setHovered(h ? i : null)}
+                setExpanded={setExpanded}
+                setHovered={setHovered}
               />
             ))}
           </div>
         </div>
       </div>
     </section>
+  );
+};
+
+type RowProps = {
+  entry: ExperienceEntry;
+  index: number;
+  isExpanded: boolean;
+  isFaded: boolean;
+  setExpanded: React.Dispatch<React.SetStateAction<number>>;
+  setHovered: React.Dispatch<React.SetStateAction<number | null>>;
+};
+
+const ExperienceRow = ({ entry, index, isExpanded, isFaded, setExpanded, setHovered }: RowProps) => {
+  const onToggle = useCallback(
+    () => setExpanded((prev) => (prev === index ? -1 : index)),
+    [index, setExpanded],
+  );
+  const onHover = useCallback(
+    (h: boolean) => setHovered(h ? index : null),
+    [index, setHovered],
+  );
+  return (
+    <ExperienceItem
+      entry={entry}
+      index={index}
+      isExpanded={isExpanded}
+      isFaded={isFaded}
+      onToggle={onToggle}
+      onHover={onHover}
+    />
   );
 };
