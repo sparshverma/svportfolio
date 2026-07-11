@@ -72,13 +72,13 @@ export const Contact = () => {
       setIsSubmitting(false);
     }
   };
-  return <section id="contact" className="py-20 px-6">
+  return <section id="contact" className="py-16 sm:py-20 px-5 sm:px-6">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-10 sm:mb-12 text-center">
           Get In <span className="gradient-text">Touch</span>
         </h2>
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8">
           {/* Contact Info */}
           <div className="space-y-6">
             <div>
@@ -124,7 +124,7 @@ export const Contact = () => {
           </div>
           
           {/* Contact Form */}
-          <form onSubmit={handleSubmit} className="glass-card glow-hover rounded-2xl p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="glass-card glow-hover rounded-2xl p-5 sm:p-6 space-y-4">
             <div className="space-y-2">
               <label htmlFor="contact-name" className="text-sm font-medium">Name</label>
               <Input id="contact-name" name="name" placeholder="Your name" className="bg-muted/50 border-border/50" value={formData.name} onChange={e => setFormData({

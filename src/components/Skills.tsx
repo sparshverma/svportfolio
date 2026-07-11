@@ -45,13 +45,13 @@ const skillCategories = [
 
 export const Skills = () => {
   return (
-    <section id="skills" className="py-20 px-6 bg-muted/20">
+    <section id="skills" className="py-16 sm:py-20 px-5 sm:px-6 bg-muted/20">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-10 sm:mb-12 text-center">
           Technical <span className="gradient-text">Skills</span>
         </h2>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {skillCategories.map((category, index) => {
             const Icon = category.icon;
             return (
@@ -61,10 +61,10 @@ export const Skills = () => {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-primary/10 rounded-xl">
-                    <Icon className="w-6 h-6 text-primary" />
+                  <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl shrink-0">
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">{category.title}</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold">{category.title}</h3>
                 </div>
                 
                 <div className="flex flex-wrap gap-2">

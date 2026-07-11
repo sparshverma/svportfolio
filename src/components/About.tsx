@@ -2,7 +2,7 @@ import { Brain, Shield, Code, Sparkles } from "lucide-react";
 
 export const About = () => {
   return (
-    <section id="about" className="py-24 px-6 relative overflow-hidden">
+    <section id="about" className="py-16 sm:py-24 px-5 sm:px-6 relative overflow-hidden">
       {/* Background gradient orbs */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-glow-pulse" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '1s' }} />
@@ -12,7 +12,7 @@ export const About = () => {
           <span className="text-primary text-sm font-medium tracking-widest uppercase mb-4 block">
             Get to know me
           </span>
-          <h2 className="text-4xl md:text-6xl font-bold">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold">
             About <span className="gradient-text">Me</span>
           </h2>
         </div>
@@ -20,32 +20,32 @@ export const About = () => {
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* Main intro card - spans 2 columns */}
-          <div className="md:col-span-2 glass-card glow-hover rounded-2xl p-8 group animate-fade-in">
+          <div className="md:col-span-2 glass-card glow-hover rounded-2xl p-6 sm:p-8 group animate-fade-in">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Sparkles className="w-5 h-5" />
               </div>
               <h3 className="text-xl font-semibold text-foreground">Who I Am</h3>
             </div>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               I am an AI/ML Engineer and SaaS founder with a Master's in Artificial Intelligence from Queen Mary University of London and a B.Tech in Computer Science from VIT. Currently building ZitBoard, a full-stack SaaS platform I architected and shipped solo, now serving 100+ active users. Professionally, I bring hands-on experience across the full ML stack: agentic AI workflows, LLM orchestration with LangChain and LangGraph, large-scale ETL pipelines on Apache Spark, and production-grade NLP systems. I've built things that run in the real world, not just notebooks and I move fast without breaking the fundamentals.
             </p>
           </div>
 
           {/* Stats card */}
-          <div className="glass-card glow-hover rounded-2xl p-8 flex flex-col justify-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="space-y-6">
+          <div className="glass-card glow-hover rounded-2xl p-6 sm:p-8 flex flex-col justify-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="grid grid-cols-3 md:grid-cols-1 gap-4 md:gap-6 text-center md:text-left">
               <div className="group cursor-default">
-                <div className="text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">2+</div>
-                <div className="text-muted-foreground text-sm uppercase tracking-wide mt-1">Years Experience</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">2+</div>
+                <div className="text-muted-foreground text-[11px] sm:text-sm uppercase tracking-wide mt-1">Years Exp</div>
               </div>
               <div className="group cursor-default">
-                <div className="text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">10+</div>
-                <div className="text-muted-foreground text-sm uppercase tracking-wide mt-1">Projects Built</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">10+</div>
+                <div className="text-muted-foreground text-[11px] sm:text-sm uppercase tracking-wide mt-1">Projects</div>
               </div>
               <div className="group cursor-default">
-                <div className="text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">5+</div>
-                <div className="text-muted-foreground text-sm uppercase tracking-wide mt-1">Tech Mastered</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text group-hover:scale-110 transition-transform inline-block">5+</div>
+                <div className="text-muted-foreground text-[11px] sm:text-sm uppercase tracking-wide mt-1">Tech</div>
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export const About = () => {
           </div>
 
           {/* Interests card - spans 2 columns */}
-          <div className="md:col-span-2 glass-card glow-hover rounded-2xl p-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+          <div className="md:col-span-2 glass-card glow-hover rounded-2xl p-6 sm:p-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
             <h3 className="text-xl font-semibold text-foreground mb-4">Beyond Engineering</h3>
             <p className="text-muted-foreground leading-relaxed">
               Beyond day-to-day engineering, I'm curious about how AI intersects with security and communication. I've explored this through projects like Cyber.ai and by experimenting with AI journalism, which has taught me to think about how technology really impacts people. I'm also interested in sovereign blockchain design—the idea of building systems that are transparent and built to last.
@@ -84,7 +84,7 @@ export const About = () => {
           </div>
 
           {/* Philosophy card */}
-          <div className="glass-card glow-hover rounded-2xl p-8 animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.4s' }}>
+          <div className="glass-card glow-hover rounded-2xl p-6 sm:p-8 animate-fade-in relative overflow-hidden" style={{ animationDelay: '0.4s' }}>
             <div className="absolute -bottom-4 -right-4 text-8xl font-bold text-primary/5 select-none">✦</div>
             <h3 className="text-xl font-semibold text-foreground mb-4">My Philosophy</h3>
             <p className="text-sm text-muted-foreground leading-relaxed relative z-10">
