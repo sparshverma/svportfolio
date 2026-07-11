@@ -55,14 +55,15 @@ const MobiusMesh = ({
     () =>
       new THREE.MeshPhysicalMaterial({
         metalness: 1.0,
-        roughness: 0.18,
-        envMapIntensity: 2.2,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.08,
+        roughness: 0.65,
+        envMapIntensity: 1.1,
+        clearcoat: 0.15,
+        clearcoatRoughness: 0.85,
         vertexColors: true,
       }),
     [],
   );
+
 
 
   // Per-instance color tint (mostly slate/charcoal, sparse bronze/gold).
