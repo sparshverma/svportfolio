@@ -517,6 +517,12 @@ const Scene = ({
           color="#000000"
         />
         <SMAA />
+        <Bloom
+          intensity={0.45}
+          luminanceThreshold={0.65}
+          luminanceSmoothing={0.35}
+          mipmapBlur
+        />
       </EffectComposer>
 
 
