@@ -30,13 +30,15 @@ const MobiusMesh = ({
   finalScale = 1,
   phase = 0,
   rotation = [0, 0, 0],
+  position = [0, 0, 0],
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
-  /** Euler rotation applied to this ring so it interlocks with the others. */
   rotation?: [number, number, number];
+  position?: [number, number, number];
 }) => {
+
 
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
