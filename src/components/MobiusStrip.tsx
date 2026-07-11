@@ -532,11 +532,11 @@ export const MobiusStrip = () => {
   const [shadow] = useState<ShadowSettings>({
     radius: 8,
     bias: -0.00025,
-    contactOpacity: 0.55,
+    contactOpacity: 0.78,
   });
   const [ssao] = useState<SSAOSettings>({
     radius: 0.6,
-    intensity: 2.2,
+    intensity: 2.8,
     distanceFalloff: 0.4,
   });
 
