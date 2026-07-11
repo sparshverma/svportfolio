@@ -62,11 +62,11 @@ export const Education = () => {
               className="glass-card glow-hover rounded-2xl overflow-hidden flex flex-col animate-fade-in"
               style={{ animationDelay: `${index * 150}ms` }}
             >
-              <div className="flex items-center justify-center p-4 sm:p-5 bg-primary/10 h-40 sm:h-48">
+              <div className="flex items-center justify-center px-0 py-6 sm:py-8 bg-primary/10">
                 <EducationLogo
                   src={edu.logo}
                   alt={edu.logoAlt}
-                  className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
+                  className="w-full h-auto max-h-48 sm:max-h-56 object-contain"
                 />
               </div>
 
