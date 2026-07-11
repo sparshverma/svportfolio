@@ -79,7 +79,7 @@ const MobiusMesh = ({
         iridescenceIOR: 1.35,
         iridescenceThicknessRange: [100, 400],
         anisotropy: 0.6,
-        anisotropicRotation: 0.15,
+        anisotropyRotation: 0.15,
         vertexColors: true,
       }),
     [],
