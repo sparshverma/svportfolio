@@ -16,15 +16,9 @@ export const Hero = () => {
       animationDelay: '1s'
     }} />
       
-      {/* 3D Möbius Strip — self-contained visual anchored to the bottom-
-          right of the hero on md+, sized so the full loop is always in
-          frame and never crosses the heading, subtitle, or CTA.
-          On mobile it drops below the CTA as a compact horizontal band. */}
-      <Suspense fallback={null}>
-        {/* Desktop / tablet: corner visual */}
-        <MobiusStrip containerClassName="hidden md:block absolute bottom-6 right-6 lg:bottom-10 lg:right-10 w-[420px] h-[280px] lg:w-[520px] lg:h-[340px] pointer-events-none z-0 opacity-95" />
-        {/* Mobile: full-width band anchored below content */}
-        <MobiusStrip containerClassName="md:hidden absolute inset-x-4 bottom-4 h-[180px] pointer-events-none z-0 opacity-90" />
+      {/* 3D Möbius Strip - Lazy loaded */}
+      <Suspense fallback={<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />}>
+        <MobiusStrip />
       </Suspense>
       
       {/* Content */}
