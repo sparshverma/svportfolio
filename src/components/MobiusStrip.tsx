@@ -398,11 +398,13 @@ const Scene = ({
   preset,
   shadow,
   ssao,
+  iridescent,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
   shadow: ShadowSettings;
   ssao: SSAOSettings;
+  iridescent: boolean;
 }) => {
 
 
