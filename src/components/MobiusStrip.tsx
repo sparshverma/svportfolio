@@ -114,6 +114,11 @@ const MobiusMesh = ({
   }, [colors]);
 
   useEffect(() => {
+    material.iridescence = iridescent ? 0.25 : 0;
+    material.needsUpdate = true;
+  }, [material, iridescent]);
+
+  useEffect(() => {
     return () => {
       geometry.dispose();
       material.dispose();
