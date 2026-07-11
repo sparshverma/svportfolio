@@ -29,16 +29,15 @@ const mouseTarget = { x: 0, y: 0 };
 const MobiusMesh = ({
   finalScale = 1,
   phase = 0,
-  offsetX = 0,
-  perpendicular = false,
+  rotation = [0, 0, 0],
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
-  offsetX?: number;
-  /** Rotate this ring 90° around the chain axis so it interlocks with neighbours. */
-  perpendicular?: boolean;
+  /** Euler rotation applied to this ring so it interlocks with the others. */
+  rotation?: [number, number, number];
 }) => {
+
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6 * finalScale);
@@ -171,10 +170,8 @@ const MobiusMesh = ({
   // perpendicular alternation (so adjacent rings interlock); inner is the
   // scaling/tilting group that animates on mount.
   return (
-    <group
-      position={[offsetX, 0, 0]}
-      rotation={perpendicular ? [Math.PI / 2, 0, 0] : [0, 0, 0]}
-    >
+    <group position={[0, 0, 0]} rotation={rotation}>
+
       <group ref={groupRef}>
         <instancedMesh
           ref={meshRef}
@@ -252,52 +249,63 @@ const Scene = ({
 }) => {
   const { camera, size } = useThree();
 
-  // Chain of four interlocked Möbius rings on a shared axis (world X).
-  // Adjacent rings alternate their plane 90° so they interlock like chain
-  // links; spacing = ring radius so they interlock without body overlap.
-  const STRIP_SCALE = 0.55;
+  // Five concentric Möbius rings sharing the same origin, each oriented on a
+  // different axis so they intertwine into one composite loop. The whole
+  // assembly then rotates continuously as a single unit.
+  const STRIP_SCALE = 0.75;
   const ringRadius = R * STRIP_SCALE;
-  const spacing = ringRadius; // interlock without overlap
   const chainTiltRef = useRef<THREE.Group>(null);
+  const spinRef = useRef<THREE.Group>(null);
 
   const strips = useMemo(() => {
-    return [0, 1, 2, 3].map((i) => ({
-      offsetX: (i - 1.5) * spacing,
-      perpendicular: i % 2 === 1,
-      phase: i * Math.PI * 0.41,
-    }));
-  }, [spacing]);
+    // Evenly distributed orientations around a shared centre — each ring is
+    // rotated by a distinct Euler triple so their planes intersect and weave
+    // through each other without stacking flat on top of one another.
+    const N = 5;
+    return Array.from({ length: N }, (_, i) => {
+      const a = (i / N) * Math.PI; // 0..π
+      return {
+        phase: i * Math.PI * 0.37,
+        rotation: [a * 0.9, a * 1.1, a * 0.5] as [number, number, number],
+      };
+    });
+  }, []);
 
-  // Fit-to-view: chain extends horizontally, single ring vertically.
+  // Fit-to-view: bounding sphere of a single ring (all rings share centre).
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
-    const halfWidth = 1.5 * spacing + ringRadius * 1.1;
-    const halfHeight = ringRadius * 1.35;
+    const halfExtent = ringRadius * 1.4;
     const aspect = size.width / Math.max(1, size.height);
     const fovRad = (persp.fov * Math.PI) / 180;
-    const zForHeight = halfHeight / Math.tan(fovRad / 2);
-    const zForWidth = halfWidth / (Math.tan(fovRad / 2) * aspect);
+    const zForHeight = halfExtent / Math.tan(fovRad / 2);
+    const zForWidth = halfExtent / (Math.tan(fovRad / 2) * aspect);
     const z = Math.max(zForHeight, zForWidth);
     camera.position.set(0, 0.2, z);
     camera.lookAt(0, 0, 0);
     persp.updateProjectionMatrix();
-  }, [camera, size.width, size.height, spacing, ringRadius]);
+  }, [camera, size.width, size.height, ringRadius]);
 
-  // Shared chain tilt (applied once to the whole chain group so rings stay
-  // interlocked correctly and share the same presentation angle).
-  useFrame(() => {
+  // Shared presentation tilt + cursor parallax on the outer group; inner
+  // spin group rotates all rings together as a single composite.
+  useFrame((_, delta) => {
     const g = chainTiltRef.current;
-    if (!g) return;
-    const baseX = -Math.PI / 3;         // -60°
-    const baseY = (20 * Math.PI) / 180; // +20°
-    if (quality.enableCursorTilt) {
-      const targetX = baseX + mouseTarget.y * 0.08;
-      const targetY = baseY + mouseTarget.x * 0.1;
-      g.rotation.x += (targetX - g.rotation.x) * 0.05;
-      g.rotation.y += (targetY - g.rotation.y) * 0.05;
-    } else {
-      g.rotation.x += (baseX - g.rotation.x) * 0.05;
-      g.rotation.y += (baseY - g.rotation.y) * 0.05;
+    if (g) {
+      const baseX = -Math.PI / 3;         // -60°
+      const baseY = (20 * Math.PI) / 180; // +20°
+      if (quality.enableCursorTilt) {
+        const targetX = baseX + mouseTarget.y * 0.08;
+        const targetY = baseY + mouseTarget.x * 0.1;
+        g.rotation.x += (targetX - g.rotation.x) * 0.05;
+        g.rotation.y += (targetY - g.rotation.y) * 0.05;
+      } else {
+        g.rotation.x += (baseX - g.rotation.x) * 0.05;
+        g.rotation.y += (baseY - g.rotation.y) * 0.05;
+      }
+    }
+    const s = spinRef.current;
+    if (s) {
+      s.rotation.y += delta * 0.25;
+      s.rotation.x += delta * 0.08;
     }
   });
 
@@ -318,21 +326,23 @@ const Scene = ({
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
-        {strips.map((s, i) => (
-          <MobiusMesh
-            key={i}
-            enableCursorTilt={quality.enableCursorTilt}
-            finalScale={STRIP_SCALE}
-            phase={s.phase}
-            offsetX={s.offsetX}
-            perpendicular={s.perpendicular}
-          />
-        ))}
+        <group ref={spinRef}>
+          {strips.map((s, i) => (
+            <MobiusMesh
+              key={i}
+              enableCursorTilt={quality.enableCursorTilt}
+              finalScale={STRIP_SCALE}
+              phase={s.phase}
+              rotation={s.rotation}
+            />
+          ))}
+        </group>
       </group>
       <FpsReporter report={quality.report} />
     </>
   );
 };
+
 
 const LoadingIndicator = () => (
   <Html center>
