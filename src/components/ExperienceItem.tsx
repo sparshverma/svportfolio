@@ -62,12 +62,6 @@ const ExperienceItemBase = ({
         </motion.div>
       </div>
 
-      {/* Sticky year gutter (md+) */}
-      <div className="hidden md:block absolute left-14 top-6 w-10 -translate-x-full pr-2 text-right">
-        <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/70">
-          {entry.period.split(" ")[0]}
-        </span>
-      </div>
 
       {/* Card */}
       <div
