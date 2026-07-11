@@ -161,6 +161,15 @@ const MobiusMesh = ({
         -normal.z * sA + binormal.z * cA,
       );
 
+      // Lateral offset along the twisted binormal — this shifts the plate
+      // sideways across the ribbon's width, so a stack of rings with
+      // different widthOffsets forms parallel tracks of one Möbius surface.
+      if (widthOffset !== 0) {
+        pos.x += twistedBinormal.x * widthOffset;
+        pos.y += twistedBinormal.y * widthOffset;
+        pos.z += twistedBinormal.z * widthOffset;
+      }
+
       // Compose basis so plate axes map to the ribbon frame:
       //   local X (length, 0.5) → tangent   — forward along the path
       //   local Y (thickness, 0.02) → twisted normal — flat face normal
@@ -172,6 +181,8 @@ const MobiusMesh = ({
     }
     mesh.instanceMatrix.needsUpdate = true;
   });
+
+
 
   // Nested groups: outer positions this link in the chain and applies the
   // perpendicular alternation (so adjacent rings interlock); inner is the
