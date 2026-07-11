@@ -178,23 +178,25 @@ export const Skills = () => {
           Technical <span className="gradient-text">Skills</span>
         </h2>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 auto-rows-fr">
           {skillCategories.map((category, index) => {
             const Icon = category.icon;
             return (
               <div
                 key={category.title}
-                className="glass-card glow-hover rounded-2xl p-6 space-y-4 animate-fade-in"
+                className="glass-card glow-hover rounded-2xl p-4 sm:p-5 lg:p-6 flex flex-col gap-4 animate-fade-in h-full"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl shrink-0">
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                  <div className="p-2 sm:p-2.5 bg-primary/10 rounded-xl shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold">{category.title}</h3>
+                  <h3 className="text-base sm:text-lg font-semibold leading-tight">
+                    {category.title}
+                  </h3>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 content-start">
                   {category.skills.map((skill) => (
                     <SkillChip key={skill.name} skill={skill} />
                   ))}
