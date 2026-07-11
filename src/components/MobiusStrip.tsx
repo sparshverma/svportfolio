@@ -338,18 +338,32 @@ const Scene = ({
 
   return (
     <>
-      {/* HDRI env map — required so metalness=0.85 surfaces reflect real
-          light instead of rendering pitch black. */}
-      <Environment preset="city" background={false} />
+      {/* Studio HDRI — primary source of the polished metallic reflections. */}
+      <Environment preset="studio" background={false} />
 
-      {/* Ambient fill + sharp angled key for crisp metallic edge highlights */}
-      <ambientLight intensity={0.4} color="#ffffff" />
+      {/* Layered studio lighting: soft fill, warm key, cool rim, and a
+          subtle bottom bounce for depth on the polished surface. */}
+      <ambientLight intensity={0.35} color="#ffffff" />
       <directionalLight
-        position={[5, 10, 5]}
-        intensity={2.5}
-        color="#ffffff"
+        position={[6, 9, 6]}
+        intensity={2.8}
+        color="#fff2d6"
         castShadow={false}
       />
+      <directionalLight
+        position={[-7, 4, -3]}
+        intensity={1.6}
+        color="#8ec5ff"
+        castShadow={false}
+      />
+      <directionalLight
+        position={[0, -6, 4]}
+        intensity={0.6}
+        color="#ffd7a8"
+        castShadow={false}
+      />
+      <pointLight position={[0, 0, 5]} intensity={0.8} color="#ffffff" />
+
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
