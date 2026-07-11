@@ -1,11 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 // Lazy load Three.js component to reduce main-thread work
 const MobiusStrip = lazy(() => import("./MobiusStrip").then(m => ({ default: m.MobiusStrip })));
 
 export const Hero = () => {
+  const [showMobius, setShowMobius] = useState(false);
+
+  useEffect(() => {
+    // Defer Three.js until after the hero has painted to protect LCP
+    const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+    const trigger = () => setShowMobius(true);
+    if (idle) {
+      const id = idle(trigger, { timeout: 2000 });
+      return () => (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(trigger, 800);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/20" />
@@ -16,10 +32,12 @@ export const Hero = () => {
       animationDelay: '1s'
     }} />
       
-      {/* 3D Möbius Strip - Lazy loaded */}
-      <Suspense fallback={<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] opacity-50 pointer-events-none z-0" />}>
-        <MobiusStrip />
-      </Suspense>
+      {/* 3D Möbius Strip - Deferred until after LCP */}
+      {showMobius && (
+        <Suspense fallback={null}>
+          <MobiusStrip />
+        </Suspense>
+      )}
       
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 py-16 sm:py-20">

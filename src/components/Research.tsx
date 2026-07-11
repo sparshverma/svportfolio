@@ -1,6 +1,6 @@
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import cyberAi from "@/assets/cyber-ai.jpg";
+import cyberAi from "@/assets/cyber-ai.webp";
 
 export const Research = () => {
   return (
