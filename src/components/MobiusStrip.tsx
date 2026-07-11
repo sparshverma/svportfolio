@@ -359,8 +359,9 @@ const Scene = ({
               phase={s.phase}
               rotation={s.rotation}
               position={s.position}
-
+              widthOffset={s.widthOffset}
             />
+
           ))}
         </group>
       </group>
