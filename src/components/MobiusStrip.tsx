@@ -339,6 +339,8 @@ const Scene = ({
               finalScale={STRIP_SCALE}
               phase={s.phase}
               rotation={s.rotation}
+              position={s.position}
+
             />
           ))}
         </group>
