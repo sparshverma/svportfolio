@@ -339,31 +339,31 @@ const Scene = ({
 
   return (
     <>
-      {/* Studio HDRI — primary source of the polished metallic reflections. */}
-      <Environment preset="studio" background={false} />
+      {/* Soft indoor HDRI — diffuse reflections for a brushed matte look. */}
+      <Environment preset="apartment" background={false} />
 
-      {/* Layered studio lighting: soft fill, warm key, cool rim, and a
-          subtle bottom bounce for depth on the polished surface. */}
-      <ambientLight intensity={0.35} color="#ffffff" />
+      {/* Natural three-point lighting: warm key from upper right, soft cool
+          fill from the left, and a subtle rim from behind for depth. */}
+      <ambientLight intensity={0.25} color="#f4efe6" />
       <directionalLight
-        position={[6, 9, 6]}
-        intensity={2.8}
-        color="#fff2d6"
-        castShadow={false}
-      />
-      <directionalLight
-        position={[-7, 4, -3]}
+        position={[5, 8, 5]}
         intensity={1.6}
-        color="#8ec5ff"
+        color="#ffe6c2"
         castShadow={false}
       />
       <directionalLight
-        position={[0, -6, 4]}
-        intensity={0.6}
-        color="#ffd7a8"
+        position={[-6, 3, 2]}
+        intensity={0.7}
+        color="#b8cfe6"
         castShadow={false}
       />
-      <pointLight position={[0, 0, 5]} intensity={0.8} color="#ffffff" />
+      <directionalLight
+        position={[0, 4, -6]}
+        intensity={0.5}
+        color="#ffffff"
+        castShadow={false}
+      />
+
 
 
       {quality.enableStarfield && <WideStarfield />}
