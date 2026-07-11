@@ -3,8 +3,10 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Environment, ContactShadows } from '@react-three/drei';
 import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { Slider } from '@/components/ui/slider';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
+
 
 export type LightingPreset = 'studio-soft' | 'warm-rim' | 'cool-fill';
 
@@ -277,10 +279,19 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
-const Lights = ({ preset }: { preset: LightingPreset }) => {
-  // Each preset drives environment intensity, ambient tone, and a three-point
-  // rig. The key light casts a soft PCF shadow with a small bias to avoid
-  // acne on the thin plates.
+type ShadowSettings = {
+  radius: number;   // PCF blur radius
+  bias: number;     // shadow bias (negative typically)
+  contactOpacity: number; // ContactShadows opacity
+};
+
+const Lights = ({
+  preset,
+  shadow,
+}: {
+  preset: LightingPreset;
+  shadow: ShadowSettings;
+}) => {
   const cfg = useMemo(() => {
     switch (preset) {
       case 'warm-rim':
@@ -314,20 +325,31 @@ const Lights = ({ preset }: { preset: LightingPreset }) => {
     }
   }, [preset]);
 
+  const keyRef = useRef<THREE.DirectionalLight>(null);
+
+  // Radius/bias are not always reactive via JSX props on directional shadows —
+  // set them imperatively so slider drags update instantly without unmount.
+  useEffect(() => {
+    const l = keyRef.current;
+    if (!l) return;
+    l.shadow.radius = shadow.radius;
+    l.shadow.bias = shadow.bias;
+    l.shadow.needsUpdate = true;
+  }, [shadow.radius, shadow.bias]);
+
   return (
     <>
       <Environment preset={cfg.env} background={false} environmentIntensity={cfg.envIntensity} />
       <ambientLight intensity={cfg.ambient.intensity} color={cfg.ambient.color} />
       <directionalLight
+        ref={keyRef}
         position={cfg.key.pos as unknown as [number, number, number]}
         intensity={cfg.key.intensity}
         color={cfg.key.color}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.00025}
         shadow-normalBias={0.02}
-        shadow-radius={8}
         shadow-camera-near={0.5}
         shadow-camera-far={30}
         shadow-camera-left={-6}
@@ -349,13 +371,17 @@ const Lights = ({ preset }: { preset: LightingPreset }) => {
   );
 };
 
+
 const Scene = ({
   quality,
   preset,
+  shadow,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
+  shadow: ShadowSettings;
 }) => {
+
   const { camera, size } = useThree();
 
   const STRIP_SCALE = 0.75;
@@ -424,7 +450,7 @@ const Scene = ({
 
   return (
     <>
-      <Lights preset={preset} />
+      <Lights preset={preset} shadow={shadow} />
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
@@ -441,10 +467,9 @@ const Scene = ({
             />
           ))}
         </group>
-        {/* Soft contact shadow beneath the composite for grounded blend. */}
         <ContactShadows
           position={[0, -ringRadius * 1.1, 0]}
-          opacity={0.55}
+          opacity={shadow.contactOpacity}
           scale={ringRadius * 6}
           blur={3.2}
           far={ringRadius * 4}
@@ -452,6 +477,7 @@ const Scene = ({
           color="#000000"
         />
       </group>
+
 
       {/* Ambient occlusion so cavities between overlapping ribbons darken
           naturally. SMAA smooths the resulting silhouettes. */}
@@ -488,7 +514,13 @@ export const MobiusStrip = () => {
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
   const [preset, setPreset] = useState<LightingPreset>('studio-soft');
+  const [shadow, setShadow] = useState<ShadowSettings>({
+    radius: 8,
+    bias: -0.00025,
+    contactOpacity: 0.55,
+  });
   const wrapRef = useRef<HTMLDivElement>(null);
+
   const quality = useAdaptiveQuality();
 
   useEffect(() => {
@@ -568,7 +600,7 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} preset={preset} />
+            <Scene quality={quality} preset={preset} shadow={shadow} />
           </Suspense>
         </Canvas>
       )}
@@ -599,7 +631,60 @@ export const MobiusStrip = () => {
           );
         })}
       </div>
+
+      {/* Shadow adjust panel — real-time PCF radius, bias, contact opacity. */}
+      <div className="pointer-events-auto absolute bottom-6 left-6 z-10 w-64 rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+          Shadows
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>PCF radius</span>
+              <span className="tabular-nums text-white/50">{shadow.radius.toFixed(1)}</span>
+            </div>
+            <Slider
+              min={0}
+              max={20}
+              step={0.1}
+              value={[shadow.radius]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, radius: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Bias</span>
+              <span className="tabular-nums text-white/50">
+                {shadow.bias.toFixed(5)}
+              </span>
+            </div>
+            <Slider
+              min={-0.005}
+              max={0.005}
+              step={0.00005}
+              value={[shadow.bias]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, bias: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Contact opacity</span>
+              <span className="tabular-nums text-white/50">
+                {shadow.contactOpacity.toFixed(2)}
+              </span>
+            </div>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[shadow.contactOpacity]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, contactOpacity: v }))}
+            />
+          </div>
+        </div>
+      </div>
     </div>
+
   );
 };
 
