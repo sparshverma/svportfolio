@@ -277,20 +277,92 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
+const Lights = ({ preset }: { preset: LightingPreset }) => {
+  // Each preset drives environment intensity, ambient tone, and a three-point
+  // rig. The key light casts a soft PCF shadow with a small bias to avoid
+  // acne on the thin plates.
+  const cfg = useMemo(() => {
+    switch (preset) {
+      case 'warm-rim':
+        return {
+          env: 'sunset' as const,
+          envIntensity: 0.7,
+          ambient: { color: '#3d2a1a', intensity: 0.2 },
+          key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.2 },
+          fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.4 },
+          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.4 },
+        };
+      case 'cool-fill':
+        return {
+          env: 'dawn' as const,
+          envIntensity: 0.9,
+          ambient: { color: '#c8d6e6', intensity: 0.35 },
+          key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.4 },
+          fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.1 },
+          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.7 },
+        };
+      case 'studio-soft':
+      default:
+        return {
+          env: 'apartment' as const,
+          envIntensity: 0.85,
+          ambient: { color: '#f4efe6', intensity: 0.3 },
+          key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 1.6 },
+          fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.7 },
+          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.5 },
+        };
+    }
+  }, [preset]);
+
+  return (
+    <>
+      <Environment preset={cfg.env} background={false} environmentIntensity={cfg.envIntensity} />
+      <ambientLight intensity={cfg.ambient.intensity} color={cfg.ambient.color} />
+      <directionalLight
+        position={cfg.key.pos as unknown as [number, number, number]}
+        intensity={cfg.key.intensity}
+        color={cfg.key.color}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.00025}
+        shadow-normalBias={0.02}
+        shadow-radius={8}
+        shadow-camera-near={0.5}
+        shadow-camera-far={30}
+        shadow-camera-left={-6}
+        shadow-camera-right={6}
+        shadow-camera-top={6}
+        shadow-camera-bottom={-6}
+      />
+      <directionalLight
+        position={cfg.fill.pos as unknown as [number, number, number]}
+        intensity={cfg.fill.intensity}
+        color={cfg.fill.color}
+      />
+      <directionalLight
+        position={cfg.rim.pos as unknown as [number, number, number]}
+        intensity={cfg.rim.intensity}
+        color={cfg.rim.color}
+      />
+    </>
+  );
+};
+
 const Scene = ({
   quality,
+  preset,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
+  preset: LightingPreset;
 }) => {
   const { camera, size } = useThree();
 
-  // Five concentric Möbius rings sharing the same origin, each oriented on a
-  // different axis so they intertwine into one composite loop. The whole
-  // assembly then rotates continuously as a single unit.
   const STRIP_SCALE = 0.75;
   const ringRadius = R * STRIP_SCALE;
   const chainTiltRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
+
 
   const strips = useMemo(() => {
     // Five rings that share centreline, orientation, and phase — but each is
