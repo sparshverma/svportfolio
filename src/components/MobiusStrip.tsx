@@ -31,13 +31,18 @@ const MobiusMesh = ({
   phase = 0,
   rotation = [0, 0, 0],
   position = [0, 0, 0],
+  widthOffset = 0,
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
   rotation?: [number, number, number];
   position?: [number, number, number];
+  /** Lateral offset along the ribbon's local width (twisted binormal) so
+   *  multiple rings become parallel tracks of one wider Möbius surface. */
+  widthOffset?: number;
 }) => {
+
 
 
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -156,6 +161,15 @@ const MobiusMesh = ({
         -normal.z * sA + binormal.z * cA,
       );
 
+      // Lateral offset along the twisted binormal — this shifts the plate
+      // sideways across the ribbon's width, so a stack of rings with
+      // different widthOffsets forms parallel tracks of one Möbius surface.
+      if (widthOffset !== 0) {
+        pos.x += twistedBinormal.x * widthOffset;
+        pos.y += twistedBinormal.y * widthOffset;
+        pos.z += twistedBinormal.z * widthOffset;
+      }
+
       // Compose basis so plate axes map to the ribbon frame:
       //   local X (length, 0.5) → tangent   — forward along the path
       //   local Y (thickness, 0.02) → twisted normal — flat face normal
@@ -167,6 +181,8 @@ const MobiusMesh = ({
     }
     mesh.instanceMatrix.needsUpdate = true;
   });
+
+
 
   // Nested groups: outer positions this link in the chain and applies the
   // perpendicular alternation (so adjacent rings interlock); inner is the
@@ -260,20 +276,23 @@ const Scene = ({
   const spinRef = useRef<THREE.Group>(null);
 
   const strips = useMemo(() => {
-    // Five identically oriented rings stacked along the ring axis (local Z,
-    // perpendicular to the ring plane). Staggered rotation phases make the
-    // plates cascade around the loop for a hypnotic layered effect.
+    // Five rings that share centreline, orientation, and phase — but each is
+    // shifted laterally along the ribbon's twisted binormal. Together they
+    // read as a single wider Möbius strip made of five parallel tracks that
+    // continuously flip 180° over one lap.
     const N = 5;
-    const stackSpacing = 0.18; // tight stack, layers stay distinct
+    const trackSpacing = 0.17; // width between adjacent tracks
     return Array.from({ length: N }, (_, i) => {
-      const z = (i - (N - 1) / 2) * stackSpacing;
+      const widthOffset = (i - (N - 1) / 2) * trackSpacing;
       return {
-        phase: (i / N) * Math.PI * 2, // even phase distribution around loop
+        phase: 0,
         rotation: [0, 0, 0] as [number, number, number],
-        position: [0, 0, z] as [number, number, number],
+        position: [0, 0, 0] as [number, number, number],
+        widthOffset,
       };
     });
   }, []);
+
 
 
   // Fit-to-view: bounding sphere of a single ring (all rings share centre).
@@ -340,8 +359,9 @@ const Scene = ({
               phase={s.phase}
               rotation={s.rotation}
               position={s.position}
-
+              widthOffset={s.widthOffset}
             />
+
           ))}
         </group>
       </group>
