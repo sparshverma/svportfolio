@@ -276,20 +276,23 @@ const Scene = ({
   const spinRef = useRef<THREE.Group>(null);
 
   const strips = useMemo(() => {
-    // Five identically oriented rings stacked along the ring axis (local Z,
-    // perpendicular to the ring plane). Staggered rotation phases make the
-    // plates cascade around the loop for a hypnotic layered effect.
+    // Five rings that share centreline, orientation, and phase — but each is
+    // shifted laterally along the ribbon's twisted binormal. Together they
+    // read as a single wider Möbius strip made of five parallel tracks that
+    // continuously flip 180° over one lap.
     const N = 5;
-    const stackSpacing = 0.18; // tight stack, layers stay distinct
+    const trackSpacing = 0.17; // width between adjacent tracks
     return Array.from({ length: N }, (_, i) => {
-      const z = (i - (N - 1) / 2) * stackSpacing;
+      const widthOffset = (i - (N - 1) / 2) * trackSpacing;
       return {
-        phase: (i / N) * Math.PI * 2, // even phase distribution around loop
+        phase: 0,
         rotation: [0, 0, 0] as [number, number, number],
-        position: [0, 0, z] as [number, number, number],
+        position: [0, 0, 0] as [number, number, number],
+        widthOffset,
       };
     });
   }, []);
+
 
 
   // Fit-to-view: bounding sphere of a single ring (all rings share centre).
