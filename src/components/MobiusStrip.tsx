@@ -617,7 +617,7 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} preset={preset} shadow={shadow} />
+            <Scene quality={quality} preset={preset} shadow={shadow} ssao={ssao} />
           </Suspense>
         </Canvas>
       )}
