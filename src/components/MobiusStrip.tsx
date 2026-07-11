@@ -631,7 +631,60 @@ export const MobiusStrip = () => {
           );
         })}
       </div>
+
+      {/* Shadow adjust panel — real-time PCF radius, bias, contact opacity. */}
+      <div className="pointer-events-auto absolute bottom-6 left-6 z-10 w-64 rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+          Shadows
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>PCF radius</span>
+              <span className="tabular-nums text-white/50">{shadow.radius.toFixed(1)}</span>
+            </div>
+            <Slider
+              min={0}
+              max={20}
+              step={0.1}
+              value={[shadow.radius]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, radius: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Bias</span>
+              <span className="tabular-nums text-white/50">
+                {shadow.bias.toFixed(5)}
+              </span>
+            </div>
+            <Slider
+              min={-0.005}
+              max={0.005}
+              step={0.00005}
+              value={[shadow.bias]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, bias: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Contact opacity</span>
+              <span className="tabular-nums text-white/50">
+                {shadow.contactOpacity.toFixed(2)}
+              </span>
+            </div>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[shadow.contactOpacity]}
+              onValueChange={([v]) => setShadow((s) => ({ ...s, contactOpacity: v }))}
+            />
+          </div>
+        </div>
+      </div>
     </div>
+
   );
 };
 
