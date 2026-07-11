@@ -19,7 +19,7 @@ const PRESET_LABELS: Record<LightingPreset, string> = {
 // ---------------------------------------------------------------------------
 // Möbius ribbon — clean minimal spec:
 //   • Exactly 120 instanced plates
-//   • Plate geometry: 0.5 (W) × 0.02 (H) × 0.15 (D)
+//   • Plate geometry: 0.5 (W) × 0.005 (H) × 0.15 (D)
 //   • Circular centerline, major radius R = 2.5
 //   • Per-plate twist of θ/2 around the tangent axis → true 180° Möbius flip
 // ---------------------------------------------------------------------------
@@ -62,8 +62,8 @@ const MobiusMesh = ({
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6 * finalScale);
 
-  // Flat, thin shingle: width along local X (0.5), height on Y (0.02), depth on Z (0.15).
-  const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.02, 0.15), []);
+  // Flat, thin ribbon segment: width along local X (0.5), height on Y (0.005), depth on Z (0.15).
+  const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.005, 0.15), []);
   const material = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
@@ -80,6 +80,7 @@ const MobiusMesh = ({
         iridescenceThicknessRange: [100, 400],
         anisotropy: 0.6,
         anisotropyRotation: 0.15,
+        side: THREE.DoubleSide,
         vertexColors: true,
       }),
     [],
