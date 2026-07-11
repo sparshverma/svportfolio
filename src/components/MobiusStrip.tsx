@@ -524,12 +524,12 @@ export const MobiusStrip = () => {
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
   const [preset, setPreset] = useState<LightingPreset>('studio-soft');
-  const [shadow, setShadow] = useState<ShadowSettings>({
+  const [shadow] = useState<ShadowSettings>({
     radius: 8,
     bias: -0.00025,
     contactOpacity: 0.55,
   });
-  const [ssao, setSsao] = useState<SSAOSettings>({
+  const [ssao] = useState<SSAOSettings>({
     radius: 0.6,
     intensity: 2.2,
     distanceFalloff: 0.4,
