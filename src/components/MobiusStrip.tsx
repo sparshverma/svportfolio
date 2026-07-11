@@ -448,7 +448,7 @@ const Scene = ({
 
   return (
     <>
-      <Lights preset={preset} />
+      <Lights preset={preset} shadow={shadow} />
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
@@ -465,10 +465,9 @@ const Scene = ({
             />
           ))}
         </group>
-        {/* Soft contact shadow beneath the composite for grounded blend. */}
         <ContactShadows
           position={[0, -ringRadius * 1.1, 0]}
-          opacity={0.55}
+          opacity={shadow.contactOpacity}
           scale={ringRadius * 6}
           blur={3.2}
           far={ringRadius * 4}
@@ -476,6 +475,7 @@ const Scene = ({
           color="#000000"
         />
       </group>
+
 
       {/* Ambient occlusion so cavities between overlapping ribbons darken
           naturally. SMAA smooths the resulting silhouettes. */}
