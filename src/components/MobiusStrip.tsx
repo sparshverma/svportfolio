@@ -647,10 +647,11 @@ export const MobiusStrip = () => {
         </Canvas>
       )}
 
-      {/* Lighting preset selector — pointer-events-auto so the tiny pill
-          stays clickable while the surrounding canvas remains inert. */}
+      {/* Lighting preset selector — horizontally scrollable on mobile so
+          pills never clip off-screen. Anchored bottom-center on small
+          screens and bottom-right on md+. */}
       <div
-        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md"
+        className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 z-10 max-w-[calc(100vw-1.5rem)] overflow-x-auto no-scrollbar flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 p-1 backdrop-blur-md"
         role="radiogroup"
         aria-label="Lighting preset"
       >
@@ -658,7 +659,7 @@ export const MobiusStrip = () => {
           type="button"
           onClick={() => setIridescent((v) => !v)}
           aria-pressed={iridescent}
-          className={`rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-colors ${
+          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] md:text-[11px] font-medium tracking-wide transition-colors ${
             iridescent
               ? 'bg-[#F3D46C]/90 text-black'
               : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -666,7 +667,7 @@ export const MobiusStrip = () => {
         >
           Iridescence
         </button>
-        <div className="mx-1 h-3 w-px bg-white/10" />
+        <div className="mx-0.5 h-3 w-px bg-white/10 shrink-0" />
         {(Object.keys(PRESET_LABELS) as LightingPreset[]).map((p) => {
           const active = preset === p;
           return (
@@ -675,7 +676,7 @@ export const MobiusStrip = () => {
               role="radio"
               aria-checked={active}
               onClick={() => setPreset(p)}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] md:text-[11px] font-medium tracking-wide transition-colors ${
                 active
                   ? 'bg-white/90 text-black'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'

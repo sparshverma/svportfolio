@@ -59,21 +59,21 @@ const certifications = [
 
 export const Certifications = () => {
   return (
-    <section id="certifications" className="py-24 px-6 relative overflow-hidden">
+    <section id="certifications" className="py-16 sm:py-24 px-5 sm:px-6 relative overflow-hidden">
       {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent pointer-events-none" />
       
       <div className="max-w-6xl mx-auto relative">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             <span className="gradient-text">Certifications</span>
           </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Professional credentials and achievements
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {certifications.map((cert, index) => {
             const content = (
               <div className="flex items-start gap-4 relative z-10">
