@@ -31,13 +31,18 @@ const MobiusMesh = ({
   phase = 0,
   rotation = [0, 0, 0],
   position = [0, 0, 0],
+  widthOffset = 0,
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
   rotation?: [number, number, number];
   position?: [number, number, number];
+  /** Lateral offset along the ribbon's local width (twisted binormal) so
+   *  multiple rings become parallel tracks of one wider Möbius surface. */
+  widthOffset?: number;
 }) => {
+
 
 
   const meshRef = useRef<THREE.InstancedMesh>(null);
