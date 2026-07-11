@@ -322,7 +322,7 @@ const Lights = ({
           ambient: { color: '#3d2a1a', intensity: 0.18 },
           key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.8 },
           fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.35 },
-          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.6 },
+          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 2.2 },
         };
       case 'cool-fill':
         return {
@@ -331,7 +331,7 @@ const Lights = ({
           ambient: { color: '#c8d6e6', intensity: 0.3 },
           key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.9 },
           fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.0 },
-          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.85 },
+          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 1.25 },
         };
       case 'studio-soft':
       default:
@@ -341,7 +341,7 @@ const Lights = ({
           ambient: { color: '#f4efe6', intensity: 0.25 },
           key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 2.2 },
           fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.6 },
-          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.6 },
+          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 1.0 },
         };
     }
   }, [preset]);
