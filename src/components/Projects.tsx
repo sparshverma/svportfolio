@@ -1,8 +1,8 @@
 import { ExternalLink, Github } from "lucide-react";
-import cyberAi from "@/assets/cyber-ai.jpg";
-import projectRwaChain from "@/assets/project-rwachain.png";
-import projectRedI from "@/assets/project-redi.png";
-import projectZitboard from "@/assets/project-zitboard.png";
+import cyberAi from "@/assets/cyber-ai.webp";
+import projectRwaChain from "@/assets/project-rwachain.webp";
+import projectRedI from "@/assets/project-redi.webp";
+import projectZitboard from "@/assets/project-zitboard.webp";
 
 const projects = [
   {
