@@ -81,22 +81,22 @@ const ExperienceItemBase = ({
             onToggle();
           }
         }}
-        className={`relative overflow-hidden rounded-2xl border backdrop-blur-xl cursor-pointer
-          bg-gradient-to-br from-card/70 to-card/30
-          transition-all duration-500 ease-out
+        className={`relative overflow-hidden rounded-2xl border cursor-pointer
+          bg-gradient-to-br from-card/80 to-card/40 md:backdrop-blur-xl
+          transition-[border-color,box-shadow,transform] duration-500 ease-out
           ${isExpanded
             ? "border-primary/50 shadow-[0_0_40px_hsl(var(--primary)/0.18)]"
             : "border-border/50 hover:border-primary/30 hover:-translate-y-0.5"}
         `}
       >
-        {/* One-shot glow sweep */}
+        {/* One-shot glow sweep (desktop only — expensive on mobile) */}
         {!reduce && (
           <motion.div
             initial={{ x: "-120%" }}
             whileInView={{ x: "120%" }}
             viewport={{ once: true }}
             transition={{ duration: 1.3, delay: index * 0.08 + 0.15, ease: "easeInOut" }}
-            className="pointer-events-none absolute inset-y-0 -inset-x-1/2 w-1/2 opacity-40"
+            className="pointer-events-none absolute inset-y-0 -inset-x-1/2 w-1/2 opacity-40 hidden md:block"
             style={{
               background:
                 "linear-gradient(115deg, transparent 30%, hsl(var(--primary) / 0.25) 50%, transparent 70%)",
