@@ -201,3 +201,5 @@ const ExperienceItemBase = ({
     </motion.div>
   );
 };
+
+export const ExperienceItem = memo(ExperienceItemBase);
