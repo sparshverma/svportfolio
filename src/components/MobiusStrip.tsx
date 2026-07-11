@@ -3,7 +3,6 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Environment, ContactShadows } from '@react-three/drei';
 import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { Slider } from '@/components/ui/slider';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
 
@@ -525,12 +524,12 @@ export const MobiusStrip = () => {
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
   const [preset, setPreset] = useState<LightingPreset>('studio-soft');
-  const [shadow, setShadow] = useState<ShadowSettings>({
+  const [shadow] = useState<ShadowSettings>({
     radius: 8,
     bias: -0.00025,
     contactOpacity: 0.55,
   });
-  const [ssao, setSsao] = useState<SSAOSettings>({
+  const [ssao] = useState<SSAOSettings>({
     radius: 0.6,
     intensity: 2.2,
     distanceFalloff: 0.4,
@@ -649,104 +648,6 @@ export const MobiusStrip = () => {
         })}
       </div>
 
-      {/* Shadow adjust panel — real-time PCF radius, bias, contact opacity. */}
-      <div className="pointer-events-auto absolute bottom-6 left-6 z-10 w-64 rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
-          Shadows
-        </div>
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>PCF radius</span>
-              <span className="tabular-nums text-white/50">{shadow.radius.toFixed(1)}</span>
-            </div>
-            <Slider
-              min={0}
-              max={20}
-              step={0.1}
-              value={[shadow.radius]}
-              onValueChange={([v]) => setShadow((s) => ({ ...s, radius: v }))}
-            />
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>Bias</span>
-              <span className="tabular-nums text-white/50">
-                {shadow.bias.toFixed(5)}
-              </span>
-            </div>
-            <Slider
-              min={-0.005}
-              max={0.005}
-              step={0.00005}
-              value={[shadow.bias]}
-              onValueChange={([v]) => setShadow((s) => ({ ...s, bias: v }))}
-            />
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>Contact opacity</span>
-              <span className="tabular-nums text-white/50">
-                {shadow.contactOpacity.toFixed(2)}
-              </span>
-            </div>
-            <Slider
-              min={0}
-              max={1}
-              step={0.01}
-              value={[shadow.contactOpacity]}
-              onValueChange={([v]) => setShadow((s) => ({ ...s, contactOpacity: v }))}
-            />
-          </div>
-        </div>
-
-        <div className="mt-4 mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
-          SSAO
-        </div>
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>Radius</span>
-              <span className="tabular-nums text-white/50">{ssao.radius.toFixed(2)}</span>
-            </div>
-            <Slider
-              min={0.05}
-              max={3}
-              step={0.05}
-              value={[ssao.radius]}
-              onValueChange={([v]) => setSsao((s) => ({ ...s, radius: v }))}
-            />
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>Intensity</span>
-              <span className="tabular-nums text-white/50">{ssao.intensity.toFixed(2)}</span>
-            </div>
-            <Slider
-              min={0}
-              max={10}
-              step={0.1}
-              value={[ssao.intensity]}
-              onValueChange={([v]) => setSsao((s) => ({ ...s, intensity: v }))}
-            />
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-[11px] text-white/70">
-              <span>Distance falloff</span>
-              <span className="tabular-nums text-white/50">
-                {ssao.distanceFalloff.toFixed(2)}
-              </span>
-            </div>
-            <Slider
-              min={0}
-              max={2}
-              step={0.01}
-              value={[ssao.distanceFalloff]}
-              onValueChange={([v]) => setSsao((s) => ({ ...s, distanceFalloff: v }))}
-            />
-          </div>
-        </div>
-      </div>
 
     </div>
 
