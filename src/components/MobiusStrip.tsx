@@ -471,7 +471,7 @@ export const MobiusStrip = () => {
             toneMapping: THREE.ACESFilmicToneMapping,
           }}
           onCreated={({ gl }) => {
-            gl.toneMappingExposure = 1.0;
+            gl.toneMappingExposure = 1.25;
             gl.domElement.addEventListener('webglcontextlost', (e) => {
               e.preventDefault();
               setHasWebGL(false);
