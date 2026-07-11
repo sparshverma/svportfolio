@@ -3,8 +3,10 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Environment, ContactShadows } from '@react-three/drei';
 import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { Slider } from '@/components/ui/slider';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
+
 
 export type LightingPreset = 'studio-soft' | 'warm-rim' | 'cool-fill';
 
