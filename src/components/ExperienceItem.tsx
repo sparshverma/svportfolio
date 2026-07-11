@@ -56,7 +56,9 @@ const ExperienceItemBase = ({
           transition={{ delay: index * 0.08 + 0.2, type: "spring", stiffness: 260, damping: 18 }}
           className="relative w-4 h-4 rounded-full bg-primary shadow-[0_0_24px_hsl(var(--primary)/0.7)]"
         >
-          <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+          {isExpanded && !reduce && (
+            <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+          )}
         </motion.div>
       </div>
 
