@@ -280,10 +280,17 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
 };
 
 type ShadowSettings = {
-  radius: number;   // PCF blur radius
-  bias: number;     // shadow bias (negative typically)
-  contactOpacity: number; // ContactShadows opacity
+  radius: number;
+  bias: number;
+  contactOpacity: number;
 };
+
+type SSAOSettings = {
+  radius: number;
+  intensity: number;
+  distanceFalloff: number;
+};
+
 
 const Lights = ({
   preset,
@@ -376,11 +383,14 @@ const Scene = ({
   quality,
   preset,
   shadow,
+  ssao,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
   shadow: ShadowSettings;
+  ssao: SSAOSettings;
 }) => {
+
 
   const { camera, size } = useThree();
 
@@ -483,14 +493,15 @@ const Scene = ({
           naturally. SMAA smooths the resulting silhouettes. */}
       <EffectComposer multisampling={0} enableNormalPass>
         <N8AO
-          aoRadius={0.6}
-          intensity={2.2}
-          distanceFalloff={0.4}
+          aoRadius={ssao.radius}
+          intensity={ssao.intensity}
+          distanceFalloff={ssao.distanceFalloff}
           quality="medium"
           color="#000000"
         />
         <SMAA />
       </EffectComposer>
+
 
       <FpsReporter report={quality.report} />
     </>
@@ -519,6 +530,12 @@ export const MobiusStrip = () => {
     bias: -0.00025,
     contactOpacity: 0.55,
   });
+  const [ssao, setSsao] = useState<SSAOSettings>({
+    radius: 0.6,
+    intensity: 2.2,
+    distanceFalloff: 0.4,
+  });
+
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const quality = useAdaptiveQuality();
@@ -600,7 +617,7 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} preset={preset} shadow={shadow} />
+            <Scene quality={quality} preset={preset} shadow={shadow} ssao={ssao} />
           </Suspense>
         </Canvas>
       )}
@@ -682,7 +699,55 @@ export const MobiusStrip = () => {
             />
           </div>
         </div>
+
+        <div className="mt-4 mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+          SSAO
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Radius</span>
+              <span className="tabular-nums text-white/50">{ssao.radius.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={0.05}
+              max={3}
+              step={0.05}
+              value={[ssao.radius]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, radius: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Intensity</span>
+              <span className="tabular-nums text-white/50">{ssao.intensity.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={0}
+              max={10}
+              step={0.1}
+              value={[ssao.intensity]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, intensity: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Distance falloff</span>
+              <span className="tabular-nums text-white/50">
+                {ssao.distanceFalloff.toFixed(2)}
+              </span>
+            </div>
+            <Slider
+              min={0}
+              max={2}
+              step={0.01}
+              value={[ssao.distanceFalloff]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, distanceFalloff: v }))}
+            />
+          </div>
+        </div>
       </div>
+
     </div>
 
   );
