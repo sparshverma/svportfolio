@@ -22,27 +22,27 @@ export const Hero = () => {
       </Suspense>
       
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-20">
-        <div className="space-y-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
+        <div className="space-y-10 sm:space-y-12">
           {/* Main content */}
           <div className="space-y-6 text-center">
             <div className="space-y-3">
-              <p className="text-sm uppercase tracking-wider text-muted-foreground font-medium opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.1s' }}>
+              <p className="text-xs sm:text-sm uppercase tracking-wider text-muted-foreground font-medium opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.1s' }}>
                 AI Engineer and Founder
               </p>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.3s' }}>
-                Sparsh Verma <span className="block text-2xl md:text-3xl lg:text-4xl font-medium text-muted-foreground mt-4">AI Engineer & Founder</span>
+              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.3s' }}>
+                Sparsh Verma <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium text-muted-foreground mt-3 sm:mt-4">AI Engineer & Founder</span>
               </h1>
             </div>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.5s' }}>
+
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed opacity-0 animate-hero-fade-in px-2" style={{ animationDelay: '0.5s' }}>
               Building intelligent systems that merge AI, security, and real-world impact
             </p>
           </div>
-          
+
           {/* CTA Button */}
           <div className="flex justify-center opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.7s' }}>
-            <Button variant="glass" size="lg" className="gap-2 px-10 py-6 text-base group" asChild>
+            <Button variant="glass" size="lg" className="gap-2 px-8 sm:px-10 py-5 sm:py-6 text-sm sm:text-base group" asChild>
               <a href="/Sparsh_Verma_CV.pdf" download className="flex items-center gap-2">
                 Download CV
                 <ArrowDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-1" />
