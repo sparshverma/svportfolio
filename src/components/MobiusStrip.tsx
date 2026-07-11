@@ -424,32 +424,7 @@ const Scene = ({
 
   return (
     <>
-      {/* Soft indoor HDRI — diffuse reflections for a brushed matte look. */}
-      <Environment preset="apartment" background={false} />
-
-      {/* Natural three-point lighting: warm key from upper right, soft cool
-          fill from the left, and a subtle rim from behind for depth. */}
-      <ambientLight intensity={0.25} color="#f4efe6" />
-      <directionalLight
-        position={[5, 8, 5]}
-        intensity={1.6}
-        color="#ffe6c2"
-        castShadow={false}
-      />
-      <directionalLight
-        position={[-6, 3, 2]}
-        intensity={0.7}
-        color="#b8cfe6"
-        castShadow={false}
-      />
-      <directionalLight
-        position={[0, 4, -6]}
-        intensity={0.5}
-        color="#ffffff"
-        castShadow={false}
-      />
-
-
+      <Lights preset={preset} />
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
@@ -464,10 +439,38 @@ const Scene = ({
               position={s.position}
               widthOffset={s.widthOffset}
             />
-
           ))}
         </group>
+        {/* Soft contact shadow beneath the composite for grounded blend. */}
+        <ContactShadows
+          position={[0, -ringRadius * 1.1, 0]}
+          opacity={0.55}
+          scale={ringRadius * 6}
+          blur={3.2}
+          far={ringRadius * 4}
+          resolution={1024}
+          color="#000000"
+        />
       </group>
+
+      {/* Ambient occlusion so cavities between overlapping ribbons darken
+          naturally. SMAA smooths the resulting silhouettes. */}
+      <EffectComposer multisampling={0} enableNormalPass>
+        <N8AO
+          aoRadius={0.6}
+          intensity={2.2}
+          distanceFalloff={0.4}
+          quality="medium"
+          color="#000000"
+        />
+        <SMAA />
+      </EffectComposer>
+
+      <FpsReporter report={quality.report} />
+    </>
+  );
+};
+
       <FpsReporter report={quality.report} />
     </>
   );
