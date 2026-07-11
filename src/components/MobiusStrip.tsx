@@ -53,14 +53,17 @@ const MobiusMesh = ({
   const geometry = useMemo(() => new THREE.BoxGeometry(0.5, 0.02, 0.15), []);
   const material = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        metalness: 0.85,
-        roughness: 0.35,
-        envMapIntensity: 1.2,
+      new THREE.MeshPhysicalMaterial({
+        metalness: 1.0,
+        roughness: 0.18,
+        envMapIntensity: 2.2,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08,
         vertexColors: true,
       }),
     [],
   );
+
 
   // Per-instance color tint (mostly slate/charcoal, sparse bronze/gold).
   const colors = useMemo(() => {
