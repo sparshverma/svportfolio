@@ -105,3 +105,14 @@ All colors MUST be HSL.
     background-clip: text;
   }
 }
+
+@layer utilities {
+  /* Hide scrollbars (used by overflow-x-auto pill rails on mobile) */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
