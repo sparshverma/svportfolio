@@ -1,14 +1,16 @@
 import { MapPin, School } from "lucide-react";
 import { useState } from "react";
+import qmulLogo from "@/assets/logos/qmul.png";
+import vitLogo from "@/assets/logos/vit.webp";
 
 const education = [
   {
     degree: "MSc Artificial Intelligence",
     institution: "Queen Mary University of London",
     location: "London, United Kingdom",
-    period: "2023 - 2024",
+    period: "2022 - 2023",
     description: "Specialized in machine learning, deep learning, and AI systems. Conducted research in AI-powered cybersecurity.",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Queen_Mary_University_of_London_Logo.svg",
+    logo: qmulLogo,
     logoAlt: "Queen Mary University of London logo",
   },
   {
@@ -17,7 +19,7 @@ const education = [
     location: "India",
     period: "2018 - 2022",
     description: "Foundation in computer science fundamentals, algorithms, and software engineering principles.",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/8/84/VIT_Vellore_Logo.svg",
+    logo: vitLogo,
     logoAlt: "VIT logo",
   },
 ];
