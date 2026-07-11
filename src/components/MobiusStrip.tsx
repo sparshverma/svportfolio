@@ -490,6 +490,7 @@ const Scene = ({
               rotation={s.rotation}
               position={s.position}
               widthOffset={s.widthOffset}
+              iridescent={iridescent}
             />
           ))}
         </group>
