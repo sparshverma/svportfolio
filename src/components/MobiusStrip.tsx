@@ -493,14 +493,15 @@ const Scene = ({
           naturally. SMAA smooths the resulting silhouettes. */}
       <EffectComposer multisampling={0} enableNormalPass>
         <N8AO
-          aoRadius={0.6}
-          intensity={2.2}
-          distanceFalloff={0.4}
+          aoRadius={ssao.radius}
+          intensity={ssao.intensity}
+          distanceFalloff={ssao.distanceFalloff}
           quality="medium"
           color="#000000"
         />
         <SMAA />
       </EffectComposer>
+
 
       <FpsReporter report={quality.report} />
     </>
