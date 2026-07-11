@@ -66,10 +66,15 @@ const MobiusMesh = ({
     () =>
       new THREE.MeshPhysicalMaterial({
         metalness: 1.0,
-        roughness: 0.65,
-        envMapIntensity: 1.1,
-        clearcoat: 0.15,
-        clearcoatRoughness: 0.85,
+        roughness: 0.52,
+        envMapIntensity: 1.5,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.65,
+        sheen: 0.6,
+        sheenRoughness: 0.5,
+        sheenColor: GOLD,
+        iridescence: 0.15,
+        iridescenceIOR: 1.3,
         vertexColors: true,
       }),
     [],
@@ -303,30 +308,30 @@ const Lights = ({
       case 'warm-rim':
         return {
           env: 'sunset' as const,
-          envIntensity: 0.7,
-          ambient: { color: '#3d2a1a', intensity: 0.2 },
-          key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.2 },
-          fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.4 },
-          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.4 },
+          envIntensity: 0.75,
+          ambient: { color: '#3d2a1a', intensity: 0.18 },
+          key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.8 },
+          fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.35 },
+          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.6 },
         };
       case 'cool-fill':
         return {
           env: 'dawn' as const,
-          envIntensity: 0.9,
-          ambient: { color: '#c8d6e6', intensity: 0.35 },
-          key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.4 },
-          fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.1 },
-          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.7 },
+          envIntensity: 0.95,
+          ambient: { color: '#c8d6e6', intensity: 0.3 },
+          key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.9 },
+          fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.0 },
+          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.85 },
         };
       case 'studio-soft':
       default:
         return {
           env: 'apartment' as const,
-          envIntensity: 0.85,
-          ambient: { color: '#f4efe6', intensity: 0.3 },
-          key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 1.6 },
-          fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.7 },
-          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.5 },
+          envIntensity: 0.9,
+          ambient: { color: '#f4efe6', intensity: 0.25 },
+          key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 2.2 },
+          fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.6 },
+          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.6 },
         };
     }
   }, [preset]);
@@ -527,11 +532,11 @@ export const MobiusStrip = () => {
   const [shadow] = useState<ShadowSettings>({
     radius: 8,
     bias: -0.00025,
-    contactOpacity: 0.55,
+    contactOpacity: 0.78,
   });
   const [ssao] = useState<SSAOSettings>({
     radius: 0.6,
-    intensity: 2.2,
+    intensity: 2.8,
     distanceFalloff: 0.4,
   });
 
