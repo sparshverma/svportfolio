@@ -1,7 +1,7 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Environment, ContactShadows } from '@react-three/drei';
-import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
+import { EffectComposer, N8AO, SMAA, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
@@ -43,6 +43,7 @@ const MobiusMesh = ({
   rotation = [0, 0, 0],
   position = [0, 0, 0],
   widthOffset = 0,
+  iridescent = true,
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
@@ -52,6 +53,7 @@ const MobiusMesh = ({
   /** Lateral offset along the ribbon's local width (twisted binormal) so
    *  multiple rings become parallel tracks of one wider Möbius surface. */
   widthOffset?: number;
+  iridescent?: boolean;
 }) => {
 
 
@@ -66,15 +68,18 @@ const MobiusMesh = ({
     () =>
       new THREE.MeshPhysicalMaterial({
         metalness: 1.0,
-        roughness: 0.52,
-        envMapIntensity: 1.5,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.65,
+        roughness: 0.42,
+        envMapIntensity: 2.2,
+        clearcoat: 0.5,
+        clearcoatRoughness: 0.55,
         sheen: 0.6,
         sheenRoughness: 0.5,
         sheenColor: GOLD,
-        iridescence: 0.15,
-        iridescenceIOR: 1.3,
+        iridescence: iridescent ? 0.25 : 0,
+        iridescenceIOR: 1.35,
+        iridescenceThicknessRange: [100, 400],
+        anisotropy: 0.6,
+        anisotropyRotation: 0.15,
         vertexColors: true,
       }),
     [],
@@ -107,6 +112,11 @@ const MobiusMesh = ({
     meshRef.current.instanceColor = attr;
     attr.needsUpdate = true;
   }, [colors]);
+
+  useEffect(() => {
+    material.iridescence = iridescent ? 0.25 : 0;
+    material.needsUpdate = true;
+  }, [material, iridescent]);
 
   useEffect(() => {
     return () => {
@@ -312,7 +322,7 @@ const Lights = ({
           ambient: { color: '#3d2a1a', intensity: 0.18 },
           key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.8 },
           fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.35 },
-          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.6 },
+          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 2.2 },
         };
       case 'cool-fill':
         return {
@@ -321,7 +331,7 @@ const Lights = ({
           ambient: { color: '#c8d6e6', intensity: 0.3 },
           key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.9 },
           fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.0 },
-          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.85 },
+          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 1.25 },
         };
       case 'studio-soft':
       default:
@@ -331,7 +341,7 @@ const Lights = ({
           ambient: { color: '#f4efe6', intensity: 0.25 },
           key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 2.2 },
           fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.6 },
-          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.6 },
+          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 1.0 },
         };
     }
   }, [preset]);
@@ -388,11 +398,13 @@ const Scene = ({
   preset,
   shadow,
   ssao,
+  iridescent,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
   shadow: ShadowSettings;
   ssao: SSAOSettings;
+  iridescent: boolean;
 }) => {
 
 
@@ -478,6 +490,7 @@ const Scene = ({
               rotation={s.rotation}
               position={s.position}
               widthOffset={s.widthOffset}
+              iridescent={iridescent}
             />
           ))}
         </group>
@@ -504,6 +517,12 @@ const Scene = ({
           color="#000000"
         />
         <SMAA />
+        <Bloom
+          intensity={0.45}
+          luminanceThreshold={0.65}
+          luminanceSmoothing={0.35}
+          mipmapBlur
+        />
       </EffectComposer>
 
 
@@ -529,6 +548,7 @@ export const MobiusStrip = () => {
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
   const [preset, setPreset] = useState<LightingPreset>('studio-soft');
+  const [iridescent, setIridescent] = useState(true);
   const [shadow] = useState<ShadowSettings>({
     radius: 8,
     bias: -0.00025,
@@ -621,7 +641,7 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} preset={preset} shadow={shadow} ssao={ssao} />
+            <Scene quality={quality} preset={preset} shadow={shadow} ssao={ssao} iridescent={iridescent} />
           </Suspense>
         </Canvas>
       )}
@@ -629,10 +649,23 @@ export const MobiusStrip = () => {
       {/* Lighting preset selector — pointer-events-auto so the tiny pill
           stays clickable while the surrounding canvas remains inert. */}
       <div
-        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md"
+        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md"
         role="radiogroup"
         aria-label="Lighting preset"
       >
+        <button
+          type="button"
+          onClick={() => setIridescent((v) => !v)}
+          aria-pressed={iridescent}
+          className={`rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-colors ${
+            iridescent
+              ? 'bg-[#F3D46C]/90 text-black'
+              : 'text-white/70 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          Iridescence
+        </button>
+        <div className="mx-1 h-3 w-px bg-white/10" />
         {(Object.keys(PRESET_LABELS) as LightingPreset[]).map((p) => {
           const active = preset === p;
           return (
