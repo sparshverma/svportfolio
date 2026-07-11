@@ -1,4 +1,5 @@
-import { GraduationCap, MapPin } from "lucide-react";
+import { MapPin, School } from "lucide-react";
+import { useState } from "react";
 
 const education = [
   {
@@ -7,15 +8,34 @@ const education = [
     location: "London, United Kingdom",
     period: "2023 - 2024",
     description: "Specialized in machine learning, deep learning, and AI systems. Conducted research in AI-powered cybersecurity.",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Queen_Mary_University_of_London_Logo.svg",
+    logoAlt: "Queen Mary University of London logo",
   },
   {
     degree: "B.Tech Computer Science Engineering",
-    institution: "VIT Vellore",
-    location: "Vellore, India",
+    institution: "VIT",
+    location: "India",
     period: "2018 - 2022",
     description: "Foundation in computer science fundamentals, algorithms, and software engineering principles.",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/8/84/VIT_Vellore_Logo.svg",
+    logoAlt: "VIT logo",
   },
 ];
+
+const EducationLogo = ({ src, alt }: { src?: string; alt: string }) => {
+  const [error, setError] = useState(false);
+  if (!src || error) {
+    return <School className="w-8 h-8 text-primary" />;
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="w-8 h-8 object-contain"
+      onError={() => setError(true)}
+    />
+  );
+};
 
 export const Education = () => {
   return (
@@ -33,7 +53,7 @@ export const Education = () => {
               style={{ animationDelay: `${index * 150}ms` }}
             >
               <div className="p-3 bg-primary/10 rounded-xl w-fit">
-                <GraduationCap className="w-8 h-8 text-primary" />
+                <EducationLogo src={edu.logo} alt={edu.logoAlt} />
               </div>
               
               <div className="space-y-2">
