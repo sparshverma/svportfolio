@@ -280,10 +280,17 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
 };
 
 type ShadowSettings = {
-  radius: number;   // PCF blur radius
-  bias: number;     // shadow bias (negative typically)
-  contactOpacity: number; // ContactShadows opacity
+  radius: number;
+  bias: number;
+  contactOpacity: number;
 };
+
+type SSAOSettings = {
+  radius: number;
+  intensity: number;
+  distanceFalloff: number;
+};
+
 
 const Lights = ({
   preset,
