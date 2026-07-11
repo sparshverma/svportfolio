@@ -29,16 +29,15 @@ const mouseTarget = { x: 0, y: 0 };
 const MobiusMesh = ({
   finalScale = 1,
   phase = 0,
-  offsetX = 0,
-  perpendicular = false,
+  rotation = [0, 0, 0],
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
   phase?: number;
-  offsetX?: number;
-  /** Rotate this ring 90° around the chain axis so it interlocks with neighbours. */
-  perpendicular?: boolean;
+  /** Euler rotation applied to this ring so it interlocks with the others. */
+  rotation?: [number, number, number];
 }) => {
+
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(0.6 * finalScale);
