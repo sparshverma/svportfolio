@@ -209,7 +209,10 @@ const MobiusMesh = ({
           ref={meshRef}
           args={[geometry, material, PLATE_COUNT]}
           frustumCulled={false}
+          castShadow
+          receiveShadow
         />
+
       </group>
     </group>
   );
