@@ -383,11 +383,14 @@ const Scene = ({
   quality,
   preset,
   shadow,
+  ssao,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
   shadow: ShadowSettings;
+  ssao: SSAOSettings;
 }) => {
+
 
   const { camera, size } = useThree();
 
