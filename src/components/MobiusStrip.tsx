@@ -260,18 +260,21 @@ const Scene = ({
   const spinRef = useRef<THREE.Group>(null);
 
   const strips = useMemo(() => {
-    // Evenly distributed orientations around a shared centre — each ring is
-    // rotated by a distinct Euler triple so their planes intersect and weave
-    // through each other without stacking flat on top of one another.
+    // Five identically oriented rings stacked along the ring axis (local Z,
+    // perpendicular to the ring plane). Staggered rotation phases make the
+    // plates cascade around the loop for a hypnotic layered effect.
     const N = 5;
+    const stackSpacing = 0.18; // tight stack, layers stay distinct
     return Array.from({ length: N }, (_, i) => {
-      const a = (i / N) * Math.PI; // 0..π
+      const z = (i - (N - 1) / 2) * stackSpacing;
       return {
-        phase: i * Math.PI * 0.37,
-        rotation: [a * 0.9, a * 1.1, a * 0.5] as [number, number, number],
+        phase: (i / N) * Math.PI * 2, // even phase distribution around loop
+        rotation: [0, 0, 0] as [number, number, number],
+        position: [0, 0, z] as [number, number, number],
       };
     });
   }, []);
+
 
   // Fit-to-view: bounding sphere of a single ring (all rings share centre).
   useEffect(() => {
