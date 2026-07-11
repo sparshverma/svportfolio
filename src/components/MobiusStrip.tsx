@@ -172,7 +172,7 @@ const MobiusMesh = ({
   // perpendicular alternation (so adjacent rings interlock); inner is the
   // scaling/tilting group that animates on mount.
   return (
-    <group position={[0, 0, 0]} rotation={rotation}>
+    <group position={position} rotation={rotation}>
 
       <group ref={groupRef}>
         <instancedMesh
