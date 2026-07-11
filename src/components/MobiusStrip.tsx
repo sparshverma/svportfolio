@@ -373,10 +373,13 @@ const Lights = ({
 const Scene = ({
   quality,
   preset,
+  shadow,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
   preset: LightingPreset;
+  shadow: ShadowSettings;
 }) => {
+
   const { camera, size } = useThree();
 
   const STRIP_SCALE = 0.75;
