@@ -21,7 +21,7 @@ type Props = {
   onHover: (hovered: boolean) => void;
 };
 
-export const ExperienceItem = ({
+const ExperienceItemBase = ({
   entry,
   index,
   isExpanded,
@@ -30,7 +30,6 @@ export const ExperienceItem = ({
   onHover,
 }: Props) => {
   const reduce = useReducedMotion();
-  const dotRef = useRef<HTMLDivElement>(null);
 
   return (
     <motion.div
@@ -38,7 +37,7 @@ export const ExperienceItem = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="relative pl-12 sm:pl-16 md:pl-24 group"
+      className="relative pl-12 sm:pl-16 md:pl-24 group will-change-[opacity]"
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       style={{
@@ -48,7 +47,6 @@ export const ExperienceItem = ({
     >
       {/* Timeline dot */}
       <div
-        ref={dotRef}
         className="absolute left-[8px] sm:left-[12px] md:left-[28px] top-7 z-10"
       >
         <motion.div
