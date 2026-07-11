@@ -43,6 +43,7 @@ const MobiusMesh = ({
   rotation = [0, 0, 0],
   position = [0, 0, 0],
   widthOffset = 0,
+  iridescent = true,
 }: {
   enableCursorTilt?: boolean;
   finalScale?: number;
@@ -52,6 +53,7 @@ const MobiusMesh = ({
   /** Lateral offset along the ribbon's local width (twisted binormal) so
    *  multiple rings become parallel tracks of one wider Möbius surface. */
   widthOffset?: number;
+  iridescent?: boolean;
 }) => {
 
 
