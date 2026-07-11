@@ -471,10 +471,7 @@ const Scene = ({
   );
 };
 
-      <FpsReporter report={quality.report} />
-    </>
-  );
-};
+
 
 
 const LoadingIndicator = () => (
