@@ -1,9 +1,19 @@
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Environment } from '@react-three/drei';
+import { Html, Environment, ContactShadows } from '@react-three/drei';
+import { EffectComposer, N8AO, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
+
+export type LightingPreset = 'studio-soft' | 'warm-rim' | 'cool-fill';
+
+const PRESET_LABELS: Record<LightingPreset, string> = {
+  'studio-soft': 'Studio Soft',
+  'warm-rim': 'Warm Rim',
+  'cool-fill': 'Cool Fill',
+};
+
 
 // ---------------------------------------------------------------------------
 // Möbius ribbon — clean minimal spec:
@@ -199,7 +209,10 @@ const MobiusMesh = ({
           ref={meshRef}
           args={[geometry, material, PLATE_COUNT]}
           frustumCulled={false}
+          castShadow
+          receiveShadow
         />
+
       </group>
     </group>
   );
@@ -264,20 +277,92 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
+const Lights = ({ preset }: { preset: LightingPreset }) => {
+  // Each preset drives environment intensity, ambient tone, and a three-point
+  // rig. The key light casts a soft PCF shadow with a small bias to avoid
+  // acne on the thin plates.
+  const cfg = useMemo(() => {
+    switch (preset) {
+      case 'warm-rim':
+        return {
+          env: 'sunset' as const,
+          envIntensity: 0.7,
+          ambient: { color: '#3d2a1a', intensity: 0.2 },
+          key: { pos: [6, 7, 5] as const, color: '#ffb26b', intensity: 2.2 },
+          fill: { pos: [-5, 2, 3] as const, color: '#4a2a1a', intensity: 0.4 },
+          rim: { pos: [-2, 4, -6] as const, color: '#ffd7a8', intensity: 1.4 },
+        };
+      case 'cool-fill':
+        return {
+          env: 'dawn' as const,
+          envIntensity: 0.9,
+          ambient: { color: '#c8d6e6', intensity: 0.35 },
+          key: { pos: [5, 8, 4] as const, color: '#eaf2ff', intensity: 1.4 },
+          fill: { pos: [-6, 3, 4] as const, color: '#8ab6ff', intensity: 1.1 },
+          rim: { pos: [1, 4, -6] as const, color: '#b8d0ff', intensity: 0.7 },
+        };
+      case 'studio-soft':
+      default:
+        return {
+          env: 'apartment' as const,
+          envIntensity: 0.85,
+          ambient: { color: '#f4efe6', intensity: 0.3 },
+          key: { pos: [5, 8, 5] as const, color: '#fff2d6', intensity: 1.6 },
+          fill: { pos: [-6, 3, 2] as const, color: '#b8cfe6', intensity: 0.7 },
+          rim: { pos: [0, 4, -6] as const, color: '#ffffff', intensity: 0.5 },
+        };
+    }
+  }, [preset]);
+
+  return (
+    <>
+      <Environment preset={cfg.env} background={false} environmentIntensity={cfg.envIntensity} />
+      <ambientLight intensity={cfg.ambient.intensity} color={cfg.ambient.color} />
+      <directionalLight
+        position={cfg.key.pos as unknown as [number, number, number]}
+        intensity={cfg.key.intensity}
+        color={cfg.key.color}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.00025}
+        shadow-normalBias={0.02}
+        shadow-radius={8}
+        shadow-camera-near={0.5}
+        shadow-camera-far={30}
+        shadow-camera-left={-6}
+        shadow-camera-right={6}
+        shadow-camera-top={6}
+        shadow-camera-bottom={-6}
+      />
+      <directionalLight
+        position={cfg.fill.pos as unknown as [number, number, number]}
+        intensity={cfg.fill.intensity}
+        color={cfg.fill.color}
+      />
+      <directionalLight
+        position={cfg.rim.pos as unknown as [number, number, number]}
+        intensity={cfg.rim.intensity}
+        color={cfg.rim.color}
+      />
+    </>
+  );
+};
+
 const Scene = ({
   quality,
+  preset,
 }: {
   quality: QualitySettings & { report: (dt: number) => void };
+  preset: LightingPreset;
 }) => {
   const { camera, size } = useThree();
 
-  // Five concentric Möbius rings sharing the same origin, each oriented on a
-  // different axis so they intertwine into one composite loop. The whole
-  // assembly then rotates continuously as a single unit.
   const STRIP_SCALE = 0.75;
   const ringRadius = R * STRIP_SCALE;
   const chainTiltRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
+
 
   const strips = useMemo(() => {
     // Five rings that share centreline, orientation, and phase — but each is
@@ -339,32 +424,7 @@ const Scene = ({
 
   return (
     <>
-      {/* Soft indoor HDRI — diffuse reflections for a brushed matte look. */}
-      <Environment preset="apartment" background={false} />
-
-      {/* Natural three-point lighting: warm key from upper right, soft cool
-          fill from the left, and a subtle rim from behind for depth. */}
-      <ambientLight intensity={0.25} color="#f4efe6" />
-      <directionalLight
-        position={[5, 8, 5]}
-        intensity={1.6}
-        color="#ffe6c2"
-        castShadow={false}
-      />
-      <directionalLight
-        position={[-6, 3, 2]}
-        intensity={0.7}
-        color="#b8cfe6"
-        castShadow={false}
-      />
-      <directionalLight
-        position={[0, 4, -6]}
-        intensity={0.5}
-        color="#ffffff"
-        castShadow={false}
-      />
-
-
+      <Lights preset={preset} />
 
       {quality.enableStarfield && <WideStarfield />}
       <group ref={chainTiltRef}>
@@ -379,14 +439,39 @@ const Scene = ({
               position={s.position}
               widthOffset={s.widthOffset}
             />
-
           ))}
         </group>
+        {/* Soft contact shadow beneath the composite for grounded blend. */}
+        <ContactShadows
+          position={[0, -ringRadius * 1.1, 0]}
+          opacity={0.55}
+          scale={ringRadius * 6}
+          blur={3.2}
+          far={ringRadius * 4}
+          resolution={1024}
+          color="#000000"
+        />
       </group>
+
+      {/* Ambient occlusion so cavities between overlapping ribbons darken
+          naturally. SMAA smooths the resulting silhouettes. */}
+      <EffectComposer multisampling={0} enableNormalPass>
+        <N8AO
+          aoRadius={0.6}
+          intensity={2.2}
+          distanceFalloff={0.4}
+          quality="medium"
+          color="#000000"
+        />
+        <SMAA />
+      </EffectComposer>
+
       <FpsReporter report={quality.report} />
     </>
   );
 };
+
+
 
 
 const LoadingIndicator = () => (
@@ -402,6 +487,7 @@ export const MobiusStrip = () => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
+  const [preset, setPreset] = useState<LightingPreset>('studio-soft');
   const wrapRef = useRef<HTMLDivElement>(null);
   const quality = useAdaptiveQuality();
 
@@ -458,12 +544,12 @@ export const MobiusStrip = () => {
     <div
       ref={wrapRef}
       className="absolute inset-0 pointer-events-none z-0"
-      aria-hidden="true"
     >
       {shouldRender && (
         <Canvas
           dpr={quality.dpr}
           frameloop={visible ? 'always' : 'never'}
+          shadows="soft"
           camera={{ position: [0, 0.2, 6], fov: 45 }}
           gl={{
             antialias: true,
@@ -473,6 +559,8 @@ export const MobiusStrip = () => {
           }}
           onCreated={({ gl }) => {
             gl.toneMappingExposure = 1.05;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            gl.shadowMap.autoUpdate = true;
             gl.domElement.addEventListener('webglcontextlost', (e) => {
               e.preventDefault();
               setHasWebGL(false);
@@ -480,12 +568,40 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} />
+            <Scene quality={quality} preset={preset} />
           </Suspense>
         </Canvas>
       )}
+
+      {/* Lighting preset selector — pointer-events-auto so the tiny pill
+          stays clickable while the surrounding canvas remains inert. */}
+      <div
+        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md"
+        role="radiogroup"
+        aria-label="Lighting preset"
+      >
+        {(Object.keys(PRESET_LABELS) as LightingPreset[]).map((p) => {
+          const active = preset === p;
+          return (
+            <button
+              key={p}
+              role="radio"
+              aria-checked={active}
+              onClick={() => setPreset(p)}
+              className={`rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-colors ${
+                active
+                  ? 'bg-white/90 text-black'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {PRESET_LABELS[p]}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
+
 
 export default MobiusStrip;
