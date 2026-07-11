@@ -277,10 +277,19 @@ const FpsReporter = ({ report }: { report: (dt: number) => void }) => {
   return null;
 };
 
-const Lights = ({ preset }: { preset: LightingPreset }) => {
-  // Each preset drives environment intensity, ambient tone, and a three-point
-  // rig. The key light casts a soft PCF shadow with a small bias to avoid
-  // acne on the thin plates.
+type ShadowSettings = {
+  radius: number;   // PCF blur radius
+  bias: number;     // shadow bias (negative typically)
+  contactOpacity: number; // ContactShadows opacity
+};
+
+const Lights = ({
+  preset,
+  shadow,
+}: {
+  preset: LightingPreset;
+  shadow: ShadowSettings;
+}) => {
   const cfg = useMemo(() => {
     switch (preset) {
       case 'warm-rim':
@@ -314,20 +323,31 @@ const Lights = ({ preset }: { preset: LightingPreset }) => {
     }
   }, [preset]);
 
+  const keyRef = useRef<THREE.DirectionalLight>(null);
+
+  // Radius/bias are not always reactive via JSX props on directional shadows —
+  // set them imperatively so slider drags update instantly without unmount.
+  useEffect(() => {
+    const l = keyRef.current;
+    if (!l) return;
+    l.shadow.radius = shadow.radius;
+    l.shadow.bias = shadow.bias;
+    l.shadow.needsUpdate = true;
+  }, [shadow.radius, shadow.bias]);
+
   return (
     <>
       <Environment preset={cfg.env} background={false} environmentIntensity={cfg.envIntensity} />
       <ambientLight intensity={cfg.ambient.intensity} color={cfg.ambient.color} />
       <directionalLight
+        ref={keyRef}
         position={cfg.key.pos as unknown as [number, number, number]}
         intensity={cfg.key.intensity}
         color={cfg.key.color}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.00025}
         shadow-normalBias={0.02}
-        shadow-radius={8}
         shadow-camera-near={0.5}
         shadow-camera-far={30}
         shadow-camera-left={-6}
@@ -348,6 +368,7 @@ const Lights = ({ preset }: { preset: LightingPreset }) => {
     </>
   );
 };
+
 
 const Scene = ({
   quality,
