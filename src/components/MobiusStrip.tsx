@@ -19,7 +19,7 @@ const PRESET_LABELS: Record<LightingPreset, string> = {
 // ---------------------------------------------------------------------------
 // Möbius ribbon — clean minimal spec:
 //   • Exactly 120 instanced plates
-//   • Plate geometry: 0.5 (W) × 0.02 (H) × 0.15 (D)
+//   • Plate geometry: 0.5 (W) × 0.005 (H) × 0.15 (D)
 //   • Circular centerline, major radius R = 2.5
 //   • Per-plate twist of θ/2 around the tangent axis → true 180° Möbius flip
 // ---------------------------------------------------------------------------
