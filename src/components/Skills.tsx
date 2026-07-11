@@ -150,7 +150,7 @@ const SkillChip = ({ skill }: { skill: Skill }) => {
   const Fallback = skill.icon ?? Rocket;
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-full text-sm border border-border/50 hover:border-primary/50 hover:bg-muted/70 transition-colors">
+    <span className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-muted/50 rounded-full text-xs sm:text-sm leading-none border border-border/50 hover:border-primary/50 hover:bg-muted/70 transition-colors whitespace-nowrap">
       {skill.slug && !imgFailed ? (
         <img
           src={`https://cdn.simpleicons.org/${skill.slug}/00d9ff`}
@@ -159,11 +159,11 @@ const SkillChip = ({ skill }: { skill: Skill }) => {
           loading="lazy"
           width={14}
           height={14}
-          className="w-3.5 h-3.5 shrink-0"
+          className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0"
           onError={() => setImgFailed(true)}
         />
       ) : (
-        <Fallback className="w-3.5 h-3.5 shrink-0 text-primary" aria-hidden="true" />
+        <Fallback className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 text-primary" aria-hidden="true" />
       )}
       <span>{skill.name}</span>
     </span>
