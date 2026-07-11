@@ -1,6 +1,6 @@
 import { useReducedMotion, motion, AnimatePresence } from "framer-motion";
 import { Briefcase, Calendar, ChevronDown, Sparkles } from "lucide-react";
-import { useRef } from "react";
+import { memo } from "react";
 
 export type ExperienceEntry = {
   title: string;
