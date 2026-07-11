@@ -487,6 +487,7 @@ export const MobiusStrip = () => {
   const [shouldRender, setShouldRender] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [visible, setVisible] = useState(true);
+  const [preset, setPreset] = useState<LightingPreset>('studio-soft');
   const wrapRef = useRef<HTMLDivElement>(null);
   const quality = useAdaptiveQuality();
 
@@ -543,12 +544,12 @@ export const MobiusStrip = () => {
     <div
       ref={wrapRef}
       className="absolute inset-0 pointer-events-none z-0"
-      aria-hidden="true"
     >
       {shouldRender && (
         <Canvas
           dpr={quality.dpr}
           frameloop={visible ? 'always' : 'never'}
+          shadows="soft"
           camera={{ position: [0, 0.2, 6], fov: 45 }}
           gl={{
             antialias: true,
@@ -558,6 +559,8 @@ export const MobiusStrip = () => {
           }}
           onCreated={({ gl }) => {
             gl.toneMappingExposure = 1.05;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            gl.shadowMap.autoUpdate = true;
             gl.domElement.addEventListener('webglcontextlost', (e) => {
               e.preventDefault();
               setHasWebGL(false);
@@ -565,12 +568,40 @@ export const MobiusStrip = () => {
           }}
         >
           <Suspense fallback={<LoadingIndicator />}>
-            <Scene quality={quality} />
+            <Scene quality={quality} preset={preset} />
           </Suspense>
         </Canvas>
       )}
+
+      {/* Lighting preset selector — pointer-events-auto so the tiny pill
+          stays clickable while the surrounding canvas remains inert. */}
+      <div
+        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex gap-1 rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-md"
+        role="radiogroup"
+        aria-label="Lighting preset"
+      >
+        {(Object.keys(PRESET_LABELS) as LightingPreset[]).map((p) => {
+          const active = preset === p;
+          return (
+            <button
+              key={p}
+              role="radio"
+              aria-checked={active}
+              onClick={() => setPreset(p)}
+              className={`rounded-full px-3 py-1 text-[11px] font-medium tracking-wide transition-colors ${
+                active
+                  ? 'bg-white/90 text-black'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {PRESET_LABELS[p]}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
+
 
 export default MobiusStrip;
