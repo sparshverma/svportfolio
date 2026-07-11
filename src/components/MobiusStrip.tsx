@@ -530,6 +530,12 @@ export const MobiusStrip = () => {
     bias: -0.00025,
     contactOpacity: 0.55,
   });
+  const [ssao, setSsao] = useState<SSAOSettings>({
+    radius: 0.6,
+    intensity: 2.2,
+    distanceFalloff: 0.4,
+  });
+
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const quality = useAdaptiveQuality();
