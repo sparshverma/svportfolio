@@ -699,7 +699,55 @@ export const MobiusStrip = () => {
             />
           </div>
         </div>
+
+        <div className="mt-4 mb-3 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+          SSAO
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Radius</span>
+              <span className="tabular-nums text-white/50">{ssao.radius.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={0.05}
+              max={3}
+              step={0.05}
+              value={[ssao.radius]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, radius: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Intensity</span>
+              <span className="tabular-nums text-white/50">{ssao.intensity.toFixed(2)}</span>
+            </div>
+            <Slider
+              min={0}
+              max={10}
+              step={0.1}
+              value={[ssao.intensity]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, intensity: v }))}
+            />
+          </div>
+          <div>
+            <div className="mb-1 flex justify-between text-[11px] text-white/70">
+              <span>Distance falloff</span>
+              <span className="tabular-nums text-white/50">
+                {ssao.distanceFalloff.toFixed(2)}
+              </span>
+            </div>
+            <Slider
+              min={0}
+              max={2}
+              step={0.01}
+              value={[ssao.distanceFalloff]}
+              onValueChange={([v]) => setSsao((s) => ({ ...s, distanceFalloff: v }))}
+            />
+          </div>
+        </div>
       </div>
+
     </div>
 
   );
