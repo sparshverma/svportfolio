@@ -1,6 +1,6 @@
 import { useReducedMotion, motion, AnimatePresence } from "framer-motion";
 import { Briefcase, Calendar, ChevronDown, Sparkles } from "lucide-react";
-import { useRef } from "react";
+import { memo } from "react";
 
 export type ExperienceEntry = {
   title: string;
@@ -21,7 +21,7 @@ type Props = {
   onHover: (hovered: boolean) => void;
 };
 
-export const ExperienceItem = ({
+const ExperienceItemBase = ({
   entry,
   index,
   isExpanded,
@@ -30,7 +30,6 @@ export const ExperienceItem = ({
   onHover,
 }: Props) => {
   const reduce = useReducedMotion();
-  const dotRef = useRef<HTMLDivElement>(null);
 
   return (
     <motion.div
@@ -38,7 +37,7 @@ export const ExperienceItem = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="relative pl-12 sm:pl-16 md:pl-24 group"
+      className="relative pl-12 sm:pl-16 md:pl-24 group will-change-[opacity]"
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       style={{
@@ -48,7 +47,6 @@ export const ExperienceItem = ({
     >
       {/* Timeline dot */}
       <div
-        ref={dotRef}
         className="absolute left-[8px] sm:left-[12px] md:left-[28px] top-7 z-10"
       >
         <motion.div
@@ -58,7 +56,9 @@ export const ExperienceItem = ({
           transition={{ delay: index * 0.08 + 0.2, type: "spring", stiffness: 260, damping: 18 }}
           className="relative w-4 h-4 rounded-full bg-primary shadow-[0_0_24px_hsl(var(--primary)/0.7)]"
         >
-          <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+          {isExpanded && !reduce && (
+            <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+          )}
         </motion.div>
       </div>
 
@@ -81,22 +81,22 @@ export const ExperienceItem = ({
             onToggle();
           }
         }}
-        className={`relative overflow-hidden rounded-2xl border backdrop-blur-xl cursor-pointer
-          bg-gradient-to-br from-card/70 to-card/30
-          transition-all duration-500 ease-out
+        className={`relative overflow-hidden rounded-2xl border cursor-pointer
+          bg-gradient-to-br from-card/80 to-card/40 md:backdrop-blur-xl
+          transition-[border-color,box-shadow,transform] duration-500 ease-out
           ${isExpanded
             ? "border-primary/50 shadow-[0_0_40px_hsl(var(--primary)/0.18)]"
             : "border-border/50 hover:border-primary/30 hover:-translate-y-0.5"}
         `}
       >
-        {/* One-shot glow sweep */}
+        {/* One-shot glow sweep (desktop only — expensive on mobile) */}
         {!reduce && (
           <motion.div
             initial={{ x: "-120%" }}
             whileInView={{ x: "120%" }}
             viewport={{ once: true }}
             transition={{ duration: 1.3, delay: index * 0.08 + 0.15, ease: "easeInOut" }}
-            className="pointer-events-none absolute inset-y-0 -inset-x-1/2 w-1/2 opacity-40"
+            className="pointer-events-none absolute inset-y-0 -inset-x-1/2 w-1/2 opacity-40 hidden md:block"
             style={{
               background:
                 "linear-gradient(115deg, transparent 30%, hsl(var(--primary) / 0.25) 50%, transparent 70%)",
@@ -201,3 +201,5 @@ export const ExperienceItem = ({
     </motion.div>
   );
 };
+
+export const ExperienceItem = memo(ExperienceItemBase);
