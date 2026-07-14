@@ -244,8 +244,10 @@ const MobiusMesh = ({
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
   const { resolvedTheme } = useTheme();
-  const starColor = resolvedTheme === 'dark' ? '#F3ECDD' : '#334155';
-  const starOpacity = resolvedTheme === 'dark' ? 0.55 : 0.7;
+  const isDark = resolvedTheme === 'dark';
+  const starColor = isDark ? '#F3ECDD' : '#000000';
+  const starOpacity = isDark ? 0.55 : 0.65;
+  const starSize = isDark ? 0.035 : 0.065;
 
   const { positions, sizes } = useMemo(() => {
     const N = 320;
@@ -276,12 +278,12 @@ const WideStarfield = () => {
           <bufferAttribute attach="attributes-size" args={[sizes, 1]} count={sizes.length} />
         </bufferGeometry>
         <pointsMaterial
-          size={0.035}
+          size={starSize}
           sizeAttenuation
           color={starColor}
           transparent
           opacity={starOpacity}
-          blending={THREE.AdditiveBlending}
+          blending={isDark ? THREE.AdditiveBlending : THREE.NormalBlending}
           depthWrite={false}
         />
       </points>
