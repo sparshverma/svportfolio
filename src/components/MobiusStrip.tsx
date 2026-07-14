@@ -5,6 +5,7 @@ import { EffectComposer, N8AO, SMAA, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useAdaptiveQuality, type QualitySettings } from '@/lib/perf/useAdaptiveQuality';
 import { FpsMeter } from '@/lib/perf/fpsMeter';
+import { useTheme } from '@/components/theme-provider';
 
 
 export type LightingPreset = 'studio-soft' | 'warm-rim' | 'cool-fill';
@@ -242,6 +243,10 @@ const MobiusMesh = ({
 // ---------------------------------------------------------------------------
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const { resolvedTheme } = useTheme();
+  const starColor = resolvedTheme === 'dark' ? '#F3ECDD' : '#94A3B8';
+  const starOpacity = resolvedTheme === 'dark' ? 0.55 : 0.55;
+
   const { positions, sizes } = useMemo(() => {
     const N = 320;
     const pos = new Float32Array(N * 3);
@@ -273,9 +278,9 @@ const WideStarfield = () => {
         <pointsMaterial
           size={0.035}
           sizeAttenuation
-          color="#F3ECDD"
+          color={starColor}
           transparent
-          opacity={0.55}
+          opacity={starOpacity}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
