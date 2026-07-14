@@ -10,10 +10,26 @@
     
     <link rel="icon" href="/favicon.png" type="image/png">
     
+    <!-- Pre-hydration theme init to avoid flash -->
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('sv-theme') || 'dark';
+          var resolved = stored === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : stored;
+          document.documentElement.classList.add(resolved);
+          document.documentElement.style.colorScheme = resolved;
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <!-- Critical CSS for immediate FCP -->
     <style>
-      :root { --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; }
-      body { margin: 0; background: hsl(222.2 84% 4.9%); color: hsl(210 40% 98%); font-family: system-ui, -apple-system, sans-serif; }
+      html.dark { background: hsl(222 47% 6%); color: hsl(210 40% 98%); }
+      html:not(.dark) { background: hsl(210 40% 98%); color: hsl(222 47% 11%); }
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
       #root { min-height: 100vh; }
     </style>
     
