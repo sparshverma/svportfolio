@@ -243,6 +243,10 @@ const MobiusMesh = ({
 // ---------------------------------------------------------------------------
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const { resolvedTheme } = useTheme();
+  const starColor = resolvedTheme === 'dark' ? '#F3ECDD' : '#475569';
+  const starOpacity = resolvedTheme === 'dark' ? 0.55 : 0.45;
+
   const { positions, sizes } = useMemo(() => {
     const N = 320;
     const pos = new Float32Array(N * 3);
@@ -274,9 +278,9 @@ const WideStarfield = () => {
         <pointsMaterial
           size={0.035}
           sizeAttenuation
-          color="#F3ECDD"
+          color={starColor}
           transparent
-          opacity={0.55}
+          opacity={starOpacity}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
