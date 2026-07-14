@@ -1,59 +1,61 @@
-# Redesign the Experience Section
 
-Modernize `src/components/Experience.tsx` into an interactive, glassmorphic timeline where each role expands in place to reveal structured details. Direction is synthesized from 10 top developer portfolios (Brittany Chiang, Rauno, Paco, Lee Robinson, Delba, Olaolu, Emil Kowalski, Linus Rogge, Brian Lovin, Joseph Uchendu).
+## Goal
+Add a theme toggle (light/dark/system) to the portfolio, with both modes fully polished. Dark stays the default and preserves the current neon-glass aesthetic; light gets a purpose-built palette (not just inverted) that keeps the brand feel — clean, minimal, with softened cyan/purple accents.
 
-## Design direction
+## 1. Theme infrastructure
 
-- **Neon-trace timeline**: keep the vertical line, but make it "draw in" as the user scrolls (scroll-linked gradient fill). Timeline dots pulse when their card enters the viewport.
-- **Glassmorphic accordion cards**: each role starts collapsed showing role, org, period, and a one-line summary. Click / tap to expand — spring animation reveals structured bullet points (Impact, Stack, Highlights) instead of one long paragraph.
-- **Focus dimming (Brittany Chiang pattern)**: hovering or expanding a card dims siblings to ~40% opacity so the active role dominates.
-- **Glow sweep on reveal**: staggered fade-in-up entrance with a one-shot neon light sweep across the glass surface.
-- **Sticky year gutter**: on md+ screens, the year "snaps" into the left gutter as you scroll through that role (Linus Rogge pattern).
-- **Type / Stack chips**: replace single "type" pill with small tag chips (role type + top 3–5 tools) for scannability.
+- Add a lightweight `ThemeProvider` in `src/components/theme-provider.tsx`:
+  - Modes: `light | dark | system`.
+  - Persist to `localStorage` under `sv-theme`.
+  - Toggle by adding/removing the `dark` class on `<html>` (Tailwind is already configured with `darkMode: ["class"]`).
+  - Listen to `prefers-color-scheme` when set to `system`.
+- Wrap the app in `src/App.tsx` with `<ThemeProvider defaultTheme="dark">`.
+- Add an inline pre-hydration script in `index.html` that sets the `dark` class before React mounts, to prevent a light flash on load for dark-mode users.
 
-## Interaction spec
+## 2. Design tokens for both modes
 
-- First card expanded by default so the section reads well without interaction.
-- Click header (or keyboard Enter/Space) toggles expand. Only one open at a time (like an accordion) — smoother visual rhythm.
-- Chevron rotates 180° on expand.
-- Respect `prefers-reduced-motion`: disable scroll-linked draw, sweep, and spring; fall back to instant expand + simple fade.
-- Fully mobile-friendly: gutter collapses, cards go full width, tap target ≥ 44px.
+Rework `src/index.css` so `:root` = light theme and `.dark` = current dark theme (moved out of `:root`).
 
-## Content restructure
+Light palette (proposal — refined, not generic white):
+- `--background`: soft off-white `210 40% 98%`
+- `--foreground`: deep navy `222 47% 11%`
+- `--card`: `0 0% 100%` with subtle border
+- `--muted`: `210 30% 94%`, `--muted-foreground`: `215 20% 40%`
+- `--primary`: deeper cyan `190 90% 40%` (WCAG-safe on white)
+- `--secondary` / `--accent`: purple `262 70% 55%`
+- `--border`: `214 25% 88%`
+- Gradients: same hues, lower alpha; glow shadows toned way down (`0 8px 24px hsl(190 90% 40% / 0.12)`).
+- `--gradient-glow`: subtle radial that reads on light bg.
 
-Split each `experiences[]` entry's long paragraph into structured fields so the expand actually reveals value:
+Dark palette: current values, unchanged, moved under `.dark { … }`.
 
-```ts
-{
-  title, organization, period, type,
-  summary: string,          // one-line teaser shown collapsed
-  highlights: string[],     // 3–6 bullet impact points shown expanded
-  stack?: string[],         // chips shown expanded
-}
-```
+## 3. Component-level audit (remove theme-breaking hardcodes)
 
-Rewrite existing paragraphs into this shape without changing meaning (ZitBoard, Fullers, QMUL, Meraki, DeepStory).
+Scan and replace any hardcoded colors so both modes work. Known/likely spots to check and fix:
+- `Hero.tsx` — gradient backgrounds using `background`/`muted` (should already be token-based; verify).
+- `MobiusStrip.tsx` — Three.js material colors are hex-based; expose them via CSS vars or pass theme-aware colors so the strip stays visible on light bg (likely swap to slightly darker cyan/purple in light mode).
+- `Navigation.tsx` scrolled state `bg-background/80` — fine, but verify shadow in light mode.
+- `Footer.tsx`, `Research.tsx`, `About/Skills/Projects/Experience/Education/Certifications/Contact` — grep for `bg-white`, `bg-black`, `text-white`, `text-black`, `bg-[#…]`, `text-[#…]` and replace with semantic tokens.
+- `glass-card` utility — tune `bg-card/40` + border for light mode (probably `bg-card/70` + stronger border via a `.dark` override).
+- Selection color, scrollbar, focus rings — verify.
 
-## Technical details
+## 4. Toggle UI
 
-- Add `framer-motion` (already common in Lovable stack; install if missing) for `motion.div` height/opacity springs, `AnimatePresence`, and `useScroll` + `useTransform` for the timeline draw.
-- Use `useInView` (framer-motion) to trigger entrance and dot pulse.
-- Timeline draw: overlay a second SVG path with `pathLength` bound to scroll progress of the section, colored with the existing `--gradient-primary`, blur-drop-shadow for the neon glow.
-- Focus dimming: track `hoveredId | expandedId` in local state; apply `opacity-40` to non-active cards via conditional class.
-- Keep all colors as semantic tokens (`--primary`, `--secondary`, `--card`, `--border`) — no hard-coded hex. Reuse `.glass-card` and `.glow-hover` from `index.css`.
-- Add small keyframe `sweep` in `tailwind.config.ts` for the one-shot glass light sweep (translateX -100% → 100% on a gradient overlay, 1.2s, once, on enter).
-- Extract the row into `ExperienceItem.tsx` to keep `Experience.tsx` readable.
+- New `src/components/ThemeToggle.tsx`: icon button using lucide `Sun` / `Moon` (with system option via dropdown, or simple 2-state toggle — see question below).
+- Placement: right side of `Navigation.tsx`, before the mobile menu button; also include in the mobile menu panel.
+- Smooth transition: add `transition-colors duration-300` on `body` (or a root wrapper) so mode switches feel intentional, not jarring.
 
-## Files
+## 5. QA pass
 
-- `src/components/Experience.tsx` — restructured data + timeline shell with scroll progress.
-- `src/components/ExperienceItem.tsx` — new; accordion card with framer-motion.
-- `tailwind.config.ts` — add `sweep` keyframe/animation.
-- `package.json` — ensure `framer-motion` present.
+- Verify contrast (WCAG AA) on primary text, muted text, buttons, and links in light mode.
+- Check the Möbius strip, glow blobs, and glass cards in light mode — adjust opacities so nothing washes out or overpowers.
+- Confirm OG image / meta unaffected.
+- Test on mobile viewport.
 
-## Out of scope
+## Technical notes
+- No new deps required (not pulling in `next-themes` — 30-line provider is enough).
+- Tailwind `darkMode: "class"` is already set, so `dark:` variants work out of the box for any spot needing mode-specific tweaks.
+- Möbius strip colors will be read from computed CSS vars at mount and on theme change (via a MutationObserver on `<html>` class, or by re-mounting when theme changes).
 
-- No changes to other sections, routing, or backend.
-- No content rewrites beyond splitting existing descriptions into `summary` + `highlights` + `stack`.
-
-Approve and I'll implement.
+## One clarification before I build
+Do you want a **simple 2-state toggle** (light ↔ dark, no system option) or a **3-state dropdown** (light / dark / system)? Simple is cleaner for a portfolio; 3-state is more "correct." I'd default to simple 2-state unless you say otherwise.
