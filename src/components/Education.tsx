@@ -74,7 +74,7 @@ export const Education = () => {
               />
 
               {/* Logo banner */}
-              <div className="relative flex items-center justify-center px-6 py-8 sm:py-10 overflow-hidden bg-gradient-to-br from-primary/10 via-transparent to-secondary/10">
+              <div className="relative flex items-center justify-center px-6 py-8 sm:py-10 overflow-hidden bg-slate-900 dark:bg-gradient-to-br dark:from-primary/10 dark:via-transparent dark:to-secondary/10">
                 {/* Animated scanning shimmer */}
                 <div
                   className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[1400ms] ease-out"

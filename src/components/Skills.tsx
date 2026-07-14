@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "./theme-provider";
 import {
   Brain,
   Code2,
@@ -147,13 +148,16 @@ const skillCategories: {
 
 const SkillChip = ({ skill }: { skill: Skill }) => {
   const [imgFailed, setImgFailed] = useState(false);
+  const { resolvedTheme } = useTheme();
   const Fallback = skill.icon ?? Rocket;
+  // Dark mode: bright neon cyan matches theme; Light mode: deep teal for AA contrast on light chip
+  const iconColor = resolvedTheme === "dark" ? "00d9ff" : "0e7490";
 
   return (
     <span className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-muted/50 rounded-full text-xs sm:text-sm leading-none border border-border/50 hover:border-primary/50 hover:bg-muted/70 transition-colors whitespace-nowrap">
       {skill.slug && !imgFailed ? (
         <img
-          src={`https://cdn.simpleicons.org/${skill.slug}/00d9ff`}
+          src={`https://cdn.simpleicons.org/${skill.slug}/${iconColor}`}
           alt=""
           aria-hidden="true"
           loading="lazy"
