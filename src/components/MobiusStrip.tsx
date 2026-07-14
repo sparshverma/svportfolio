@@ -244,8 +244,8 @@ const MobiusMesh = ({
 const WideStarfield = () => {
   const groupRef = useRef<THREE.Group>(null);
   const { resolvedTheme } = useTheme();
-  const starColor = resolvedTheme === 'dark' ? '#F3ECDD' : '#94A3B8';
-  const starOpacity = resolvedTheme === 'dark' ? 0.55 : 0.55;
+  const starColor = resolvedTheme === 'dark' ? '#F3ECDD' : '#334155';
+  const starOpacity = resolvedTheme === 'dark' ? 0.55 : 0.7;
 
   const { positions, sizes } = useMemo(() => {
     const N = 320;
