@@ -2,9 +2,58 @@ import { Award, ExternalLink } from "lucide-react";
 
 const certifications = [
   {
+    title: "Google AI Professional (Coursera)",
+    issuer: "Coursera",
+    link: "https://www.coursera.org/account/accomplishments/professional-cert/4PODSM90T4LI",
+  },
+  {
+    title: "Claude 101 – Anthropic",
+    issuer: "Anthropic",
+    link: "https://verify.skilljar.com/c/2wmpy9nqnmyd",
+  },
+  {
+    title: "AI Fluency Framework & Foundations – Anthropic",
+    issuer: "Anthropic",
+    link: "https://verify.skilljar.com/c/eozf7gas4hb7",
+  },
+  {
+    title: "Generative AI Bootcamp",
+    issuer: "GrowthSchool",
+    link: "https://learners.growthschool.io/certificate/f9409f43-5fab-4e47-a339-c1875de2c887",
+  },
+  {
+    title: "Automation AI Accelerator: Co-pilot to Autonomous Agent",
+    issuer: "Forage",
+    link: "https://www.theforage.com/completion-certificates/gCW7Xki5Y3vNpBmnn/Nw3MzxF2wjmki7Qor_gCW7Xki5Y3vNpBmnn_tgNmebyHmYscuxY4r_1773077581406_completion_certificate.pdf",
+  },
+  {
+    title: "The One Million Prompters – Dubai Future Foundation",
+    issuer: "Dubai Future Foundation",
+    link: "https://omp.dub.ai/certificate/Gl1U2jHpyxDb",
+  },
+  {
+    title: "Vibe Coding L2: Silver (Lovable)",
+    issuer: "Lovable",
+  },
+  {
+    title: "Kubernetes Certified App Developer",
+    issuer: "Udemy",
+    link: "https://www.udemy.com/certificate/UC-c8427c3e-5910-44df-a63d-034f9bc9ca31/",
+  },
+  {
+    title: "JPMorgan Chase Quantitative Research",
+    issuer: "JPMorgan Chase & Co.",
+    link: "https://www.theforage.com/completion-certificates/Sj7temL583QAYpHXD/bWqaecPDbYAwSDqJy_Sj7temL583QAYpHXD_tgNmebyHmYscuxY4r_1766847181750_completion_certificate.pdf",
+  },
+  {
+    title: "Goldman Sachs SE Job Simulation",
+    issuer: "Goldman Sachs",
+    link: "https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Goldman%20Sachs/NPdeQ43o8P9HJmJzg_Goldman%20Sachs_tgNmebyHmYscuxY4r_1725560948162_completion_certificate.pdf",
+  },
+  {
     title: "Data Science in Real-world Projects",
-    issuer: "Professional Development",
-    link: "https://ude.my/UC-2783f98c-b93c-4dc9-af37-7a46f9b43cab",
+    issuer: "Udemy",
+    link: "https://www.udemy.com/certificate/UC-2783f98c-b93c-4dc9-af37-7a46f9b43cab/",
   },
   {
     title: "Google Data Analyst Certificate",
@@ -17,43 +66,29 @@ const certifications = [
     link: "https://www.credly.com/badges/5bb5ea99-fa8f-408f-833f-4a81a0822d09",
   },
   {
-    title: "Software Developer Mastery, Antipatterns",
-    issuer: "Software Engineering",
-    link: "https://ude.my/UC-c7e89f6e-26ec-4792-944f-cdf50e5fdeb3",
-  },
-  {
-    title: "Goldman Sachs Software Engineering Job Simulation",
-    issuer: "Goldman Sachs",
-    link: "https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Goldman%20Sachs/NPdeQ43o8P9HJmJzg_Goldman%20Sachs_tgNmebyHmYscuxY4r_1725560948162_completion_certificate.pdf",
-  },
-  {
-    title: "Project Management Certification",
-    issuer: "Professional Development",
-  },
-  {
-    title: "Accenture Data Analytics and Visualisation",
+    title: "Accenture Data Analytics & Visualisation",
     issuer: "Accenture",
     link: "https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Accenture%20North%20America/hzmoNKtzvAzXsEqx8_Accenture%20North%20America_tgNmebyHmYscuxY4r_1726161271344_completion_certificate.pdf",
   },
   {
-    title: "Kubernetes Certified Application Developer",
-    issuer: "Cloud Native Computing Foundation",
-    link: "https://ude.my/UC-c8427c3e-5910-44df-a63d-034f9bc9ca31",
+    title: "Software Engineer Certificate - HackerRank",
+    issuer: "HackerRank",
+    link: "https://www.hackerrank.com/certificates/iframe/8d37233d3769",
   },
   {
-    title: "Generative AI Bootcamp",
-    issuer: "AI Training",
-    link: "https://learners.growthschool.io/certificate/f9409f43-5fab-4e47-a339-c1875de2c887",
+    title: "SQL(Advanced) Certification - HackerRank",
+    issuer: "HackerRank",
+    link: "https://www.hackerrank.com/certificates/iframe/61b34efbeb35",
   },
   {
-    title: "JPMorgan Chase & Co. Quantitative Research",
-    issuer: "JPMorgan Chase & Co.",
-    link: "https://www.theforage.com/completion-certificates/Sj7temL583QAYpHXD/bWqaecPDbYAwSDqJy_Sj7temL583QAYpHXD_tgNmebyHmYscuxY4r_1766847181750_completion_certificate.pdf",
-  },
-  {
-    title: "Tata GenAI Powered Data Analytics",
+    title: "Tata - GenAI Powered Data Analytics",
     issuer: "Tata",
     link: "https://www.theforage.com/completion-certificates/ifobHAoMjQs9s6bKS/gMTdCXwDdLYoXZ3wG_ifobHAoMjQs9s6bKS_tgNmebyHmYscuxY4r_1766861534585_completion_certificate.pdf",
+  },
+  {
+    title: "Software Development Mastery: Antipatterns",
+    issuer: "Udemy",
+    link: "https://www.udemy.com/certificate/UC-c7e89f6e-26ec-4792-944f-cdf50e5fdeb3/",
   },
 ];
 

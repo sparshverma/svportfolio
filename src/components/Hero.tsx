@@ -61,7 +61,7 @@ export const Hero = () => {
           {/* CTA Button */}
           <div className="flex justify-center opacity-0 animate-hero-fade-in" style={{ animationDelay: '0.7s' }}>
             <Button variant="glass" size="lg" className="gap-2 px-8 sm:px-10 py-5 sm:py-6 text-sm sm:text-base group" asChild>
-              <a href="/Sparsh_Verma_CV.pdf" download className="flex items-center gap-2">
+              <a href="/Sparsh_Verma_CV.pdf" download="sparshverma_AI_Engineer.pdf" className="flex items-center gap-2">
                 Download CV
                 <ArrowDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-1" />
               </a>
