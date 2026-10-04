@@ -1,4 +1,58 @@
 import { Award, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import courseraLogo from "@/assets/certification-logos/coursera.svg.asset.json";
+import anthropicLogo from "@/assets/certification-logos/anthropic.svg.asset.json";
+import growthSchoolLogo from "@/assets/certification-logos/growthschool.png.asset.json";
+import forageLogo from "@/assets/certification-logos/forage.png.asset.json";
+import dubaiFutureLogo from "@/assets/certification-logos/dubai.png.asset.json";
+import lovableLogo from "@/assets/certification-logos/lovable.ico.asset.json";
+import udemyLogo from "@/assets/certification-logos/udemy.svg.asset.json";
+import jpmorganLogo from "@/assets/certification-logos/jpmorgan.png.asset.json";
+import goldmanSachsLogo from "@/assets/certification-logos/goldmansachs.svg.asset.json";
+import googleLogo from "@/assets/certification-logos/google.svg.asset.json";
+import accentureLogo from "@/assets/certification-logos/accenture.svg.asset.json";
+import hackerRankLogo from "@/assets/certification-logos/hackerrank.svg.asset.json";
+import tataLogo from "@/assets/certification-logos/tata.svg.asset.json";
+
+// The site's asset host also serves logos in local previews, where relative asset URLs fall through to HTML.
+const assetUrl = (url: string) => `https://svportfolio.lovable.app${url}`;
+
+const issuerLogos: Record<string, { url: string; monochrome?: boolean }> = {
+  Coursera: { url: courseraLogo.url, monochrome: true },
+  Anthropic: { url: anthropicLogo.url, monochrome: true },
+  GrowthSchool: { url: growthSchoolLogo.url },
+  Forage: { url: forageLogo.url },
+  "Dubai Future Foundation": { url: dubaiFutureLogo.url },
+  Lovable: { url: lovableLogo.url },
+  Udemy: { url: udemyLogo.url, monochrome: true },
+  "JPMorgan Chase & Co.": { url: jpmorganLogo.url },
+  "Goldman Sachs": { url: goldmanSachsLogo.url, monochrome: true },
+  Google: { url: googleLogo.url, monochrome: true },
+  Accenture: { url: accentureLogo.url, monochrome: true },
+  HackerRank: { url: hackerRankLogo.url, monochrome: true },
+  Tata: { url: tataLogo.url, monochrome: true },
+};
+
+const IssuerLogo = ({ issuer }: { issuer: string }) => {
+  const [failed, setFailed] = useState(false);
+  const logo = issuerLogos[issuer];
+
+  return (
+    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card p-2.5 transition-colors duration-300 group-hover:border-primary/30">
+      {logo && !failed ? (
+        <img
+          src={assetUrl(logo.url)}
+          alt={`${issuer} logo`}
+          loading="lazy"
+          className={`h-full w-full object-contain ${logo.monochrome ? "dark:invert" : ""}`}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Award className="h-5 w-5 text-primary" aria-label={`${issuer} emblem`} />
+      )}
+    </span>
+  );
+};
 
 const certifications = [
   {
@@ -112,12 +166,7 @@ export const Certifications = () => {
           {certifications.map((cert, index) => {
             const content = (
               <div className="flex items-start gap-4 relative z-10">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="relative p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
-                    <Award className="w-5 h-5 text-primary" />
-                  </div>
-                </div>
+                <IssuerLogo issuer={cert.issuer} />
                 <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="flex items-start gap-2">
                     <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
