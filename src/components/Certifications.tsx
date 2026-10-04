@@ -14,6 +14,9 @@ import accentureLogo from "@/assets/certification-logos/accenture.svg.asset.json
 import hackerRankLogo from "@/assets/certification-logos/hackerrank.svg.asset.json";
 import tataLogo from "@/assets/certification-logos/tata.svg.asset.json";
 
+// The site's asset host also serves logos in local previews, where relative asset URLs fall through to HTML.
+const assetUrl = (url: string) => `https://svportfolio.lovable.app${url}`;
+
 const issuerLogos: Record<string, { url: string; monochrome?: boolean }> = {
   Coursera: { url: courseraLogo.url, monochrome: true },
   Anthropic: { url: anthropicLogo.url, monochrome: true },
@@ -38,7 +41,7 @@ const IssuerLogo = ({ issuer }: { issuer: string }) => {
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card p-2.5 transition-colors duration-300 group-hover:border-primary/30">
       {logo && !failed ? (
         <img
-          src={logo.url}
+          src={assetUrl(logo.url)}
           alt={`${issuer} logo`}
           loading="lazy"
           className={`h-full w-full object-contain ${logo.monochrome ? "dark:invert" : ""}`}
