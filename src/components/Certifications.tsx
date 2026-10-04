@@ -49,6 +49,7 @@ const IssuerLogo = ({ issuer }: { issuer: string }) => {
       )}
     </span>
   );
+};
 
 const certifications = [
   {
